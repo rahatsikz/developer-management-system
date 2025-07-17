@@ -49,7 +49,7 @@ export default function ViewTabs() {
   return (
     <Tabs
       defaultValue={localStorage.getItem("view") || "list"}
-      className='py-0'
+      className='py-0 max-lg:fixed w-full bg-background z-50'
     >
       <TabsList className='bg-transparent justify-start border-b border-input rounded-none w-full px-6 py-1 gap-1.5 h-12'>
         {tabsArr.map((tab) => (

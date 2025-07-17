@@ -96,7 +96,7 @@ const FilterBar = () => {
                 Columns
               </Button>
             </SheetTrigger>
-            <SheetContent className='right-4 top-12 bottom-6 h-auto rounded-e-xl'>
+            <SheetContent className='right-4 top-[146px] bottom-6 h-auto rounded-e-xl'>
               <SheetHeader>
                 <SheetTitle>Fields</SheetTitle>
                 <SheetDescription></SheetDescription>

@@ -54,7 +54,12 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                     {field.value ? (
                       <span className='inline-flex gap-2 items-center'>
                         <CalendarIcon className='lg:mr-1 size-4' />{" "}
-                        {format(field.value, "MMM dd, yyyy")}
+                        <span className='block lg:hidden'>
+                          {format(field.value, "MMM dd, yy")}
+                        </span>
+                        <span className='hidden lg:block'>
+                          {format(field.value, "MMM dd, yyyy")}
+                        </span>
                       </span>
                     ) : (
                       <CalendarPlus className='size-4' />

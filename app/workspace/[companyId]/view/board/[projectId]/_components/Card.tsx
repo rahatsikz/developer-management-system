@@ -26,6 +26,7 @@ const Card = ({ task }: { task: any }) => {
       : undefined,
     transition,
     opacity: isDragging ? 0 : 1,
+    touchAction: "none",
   };
 
   const [isFocused, setIsFocused] = useState(false);
@@ -91,7 +92,7 @@ export function CardForm({
     <Form {...form}>
       <form className='space-y-0.5' onFocus={onFocus} onBlur={onBlur}>
         {formConfig.map((item, index) => (
-          <div className='flex items-center w-9/12 gap-3' key={index}>
+          <div className='flex items-center w-full gap-3' key={index}>
             <Label
               htmlFor={item.name + task.id}
               className='text-muted-foreground w-20'

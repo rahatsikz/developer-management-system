@@ -7,6 +7,11 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
+  // PointerSensor,
+  // TouchSensor,
+  // useSensor,
+  // useSensors,
+  // KeyboardSensor,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { GripIcon } from "lucide-react";
@@ -138,11 +143,23 @@ const BoardPage = () => {
     setIsClient(true);
   }, []);
 
+  // const sensors = useSensors(
+  //   useSensor(PointerSensor),
+  //   useSensor(TouchSensor, {
+  //     activationConstraint: { delay: 200, tolerance: 5 },
+  //   }),
+  //   useSensor(KeyboardSensor) // optional, for a11y
+  // );
+
   if (!isClient) return;
 
   return (
     <div>
-      <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
+      <DndContext
+        // sensors={sensors}
+        onDragEnd={handleDragEnd}
+        onDragStart={handleDragStart}
+      >
         <div className='flex gap-4'>
           {allTasks.map((item) => (
             <Column

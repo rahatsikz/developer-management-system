@@ -232,7 +232,7 @@ export function CalendarView() {
                     {format(day, "d")}
                   </div>
 
-                  <div className='px-2 space-y-2 mt-[56px] '>
+                  <div className='px-2 space-y-2 mt-[56px] hidden md:block'>
                     {groupedTaskList[format(day, "yyyy-MM-dd")]
                       ?.slice(0, 2)
                       .map((task: any) => (
@@ -245,7 +245,7 @@ export function CalendarView() {
                           {task.name}
                         </div>
                       ))}
-                    {groupedTaskList[format(day, "yyyy-MM-dd")]?.length > 1 && (
+                    {groupedTaskList[format(day, "yyyy-MM-dd")]?.length > 2 && (
                       <div className='rounded-full bg-muted/70 px-2 py-2 text-center text-sm font-medium text-foreground'>
                         +
                         {groupedTaskList[format(day, "yyyy-MM-dd")]?.length - 1}{" "}
@@ -264,7 +264,7 @@ export function CalendarView() {
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent
           side='right'
-          className='right-4 top-12 bottom-6 h-auto rounded-e-xl'
+          className='lg:right-4 top-[118px] md:top-[125px] lg:top-[76px] lg:bottom-1 h-auto rounded-e-xl w-full'
         >
           <SheetHeader>
             <SheetTitle className='text-left'>
@@ -272,7 +272,7 @@ export function CalendarView() {
             </SheetTitle>
           </SheetHeader>
           {
-            <div className='space-y-2'>
+            <div className='space-y-4 mt-5'>
               {selectedDate &&
                 groupedTaskList[format(selectedDate, "yyyy-MM-dd")]?.map(
                   (task: any) => <Card key={task.id} task={task} />

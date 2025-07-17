@@ -23,8 +23,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         control={formControl}
         name={name}
         render={({ field }) => (
-          <FormItem>
-            {label && <FormLabel>{label}</FormLabel>}
+          <FormItem className='flex flex-col gap-2'>
+            {label && <FormLabel className='pl-1'>{label}</FormLabel>}
             <FormControl>
               <input
                 type={type}
@@ -32,7 +32,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                   "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-sm",
                   className
                 )}
-                autoComplete='off'
+                // autoComplete='off'
                 {...field}
                 {...props}
                 ref={ref}
