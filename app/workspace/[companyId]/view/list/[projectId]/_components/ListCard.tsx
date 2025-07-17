@@ -59,9 +59,9 @@ export default function ListCard({ item }: any) {
   }, [isNameEditing, item.id]);
 
   return (
-    <Card>
+    <Card className='w-full'>
       <Form {...form}>
-        <CardHeader className='group ml-1'>
+        <CardHeader className='group ml-1 sm:max-lg:p-4 '>
           <CardDescription>Name</CardDescription>
 
           <div
@@ -118,7 +118,7 @@ export default function ListCard({ item }: any) {
             </form>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className='sm:max-lg:p-4 sm:max-lg:pt-0'>
           <AddTaskForm form={form} />
         </CardContent>
       </Form>
@@ -146,7 +146,7 @@ export function AddListCard() {
   }, [isAddingTask]);
 
   return (
-    <Card>
+    <Card className='w-full'>
       <CardContent className={cn("p-0", isAddingTask && "hidden")}>
         <Button
           variant={"ghost"}
@@ -203,7 +203,7 @@ export function AddListCard() {
 
 function AddTaskForm({ form }: { form: UseFormReturn<any> }) {
   return (
-    <div className='gap-3 grid grid-cols-2 '>
+    <div className='gap-x-6 gap-y-2.5 grid grid-cols-2 '>
       <div>
         <CardDescription className='pl-1'>Assginee</CardDescription>
         <MultiSelect

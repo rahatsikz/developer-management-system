@@ -6,13 +6,14 @@ export const useGetMyCompanies = (userId: string) => {
     queryKey: ["companies"],
     queryFn: async () => {
       try {
-        const response = await axiosInstance.get(`/companies/${userId}`);
+        const response = await axiosInstance.get(`/company/user/${userId}`);
         return response.data;
       } catch (error) {
         throw error;
       }
     },
     staleTime: 1000 * 60 * 5,
+    enabled: !!userId,
   });
 };
 

@@ -21,6 +21,7 @@ import { Form, FormField } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useVerifyOtp } from "@/api/auth.query";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/use-auth-store";
 
 interface OtpVerificationProps {
   email: string;
@@ -36,11 +37,15 @@ export default function OtpVerification({ email }: OtpVerificationProps) {
     },
   });
 
+  const { setUser } = useAuthStore((state) => state);
+
   const handleVerify = async (values: { otp: string }) => {
     mutate(
       { email, code: values.otp },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
+          console.log(data);
+          setUser(data.data);
           toast.success("Logged in successfully");
           router.push("/workspace/company");
         },

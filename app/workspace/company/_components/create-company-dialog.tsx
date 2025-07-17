@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
 import { useCreateCompany } from "@/api/company.query";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/use-auth-store";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -41,12 +42,14 @@ export function CreateCompanyDialog() {
   });
 
   const { mutate: createCompany, isPending } = useCreateCompany();
+  const { user } = useAuthStore((state) => state);
 
   async function onSubmit(values: FormValues) {
     try {
+      // ! CHANGE USER ID and add Zustand
       const data = {
         name: values.name,
-        userId: "123",
+        userId: user?.id ?? "",
       };
       createCompany(data, {
         onSuccess: () => {

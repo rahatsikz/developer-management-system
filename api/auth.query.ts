@@ -33,3 +33,17 @@ export const useVerifyOtp = () => {
     },
   });
 };
+
+// log out
+export const useLogout = () => {
+  return useMutation({
+    mutationFn: async () => {
+      try {
+        const response = await axiosInstance.post("/auth/logout");
+        return response.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+  });
+};

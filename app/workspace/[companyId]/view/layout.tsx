@@ -7,9 +7,9 @@ export default function ProjectBoardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className='space-y-4'>
+    <div className='flex flex-col gap-5'>
       <ViewTabs />
-      <section className='px-8'>{children}</section>
+      <section className='lg:px-8 px-4 max-lg:mt-16'>{children}</section>
     </div>
   );
 }

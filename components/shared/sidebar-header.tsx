@@ -61,9 +61,9 @@ export default function SidebarHeader() {
         <div className='flex min-h-[69px] w-full items-center justify-between border-b px-6'>
           <div className='flex w-full items-center gap-2.5 lg:gap-3'>
             <SidebarToggler />
-            <Link href={"/"} className='-mt-1.5 flex'>
-              <h1 className='my-auto text-center text-3xl font-semibold leading-none tracking-tight text-[#32BA55] lg:text-[32px]'>
-                avenaa
+            <Link href={"/"} className=' flex'>
+              <h1 className='my-auto text-center text-base font-semibold leading-none tracking-tight text-primary lg:text-[32px]'>
+                Developer Management System
               </h1>
               {/* <InfoIcon className='ml-0.5 mt-1 h-2 w-2 text-[#32BA55]' /> */}
             </Link>

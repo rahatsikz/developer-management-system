@@ -19,13 +19,29 @@ import { Separator } from "@/components/ui/separator";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Building2 } from "lucide-react";
+import { Building2, LogOut } from "lucide-react";
+import { useLogout } from "@/api/auth.query";
+import { useAuthStore } from "@/store/use-auth-store";
+import { toast } from "sonner";
 
 export default function DMSSidebar() {
   const pathname = usePathname();
 
   const [active, setActive] = useState(pathname);
   const { open, isMobile, setOpenMobile } = useSidebar();
+
+  const { mutate: logout } = useLogout();
+  const { setUser } = useAuthStore((state) => state);
+
+  const handleLogOut = () => {
+    logout(undefined, {
+      onSuccess: () => {
+        toast.success("Logged out successfully");
+        setUser(null);
+        window.location.href = "/sign-in";
+      },
+    });
+  };
 
   return (
     <>
@@ -96,14 +112,14 @@ export default function DMSSidebar() {
             </ScrollArea>
           </SidebarGroupContent>
         </SidebarContent>
-        <SidebarFooter className='mb-3 px-0'>
+        <SidebarFooter className='mt-3 mb-0 px-0'>
           <Separator />
           <SidebarMenu className='gap-0 px-2'>
             {[
               {
-                title: "Settings",
-                url: "/settings",
-                icon: () => <></>,
+                title: "Log out",
+                url: "/logout",
+                icon: () => <LogOut />,
               },
             ].map((item) => (
               <SidebarMenuItem
@@ -111,7 +127,7 @@ export default function DMSSidebar() {
                 key={item.title}
               >
                 <SidebarMenuButton
-                  className={cn("hover:text-[#32BA55]")}
+                  className={cn("hover:text-destructive cursor-pointer")}
                   asChild
                   onMouseEnter={() => {
                     setActive(item.url ?? "");
@@ -119,11 +135,11 @@ export default function DMSSidebar() {
                   onMouseLeave={() => setActive(pathname)}
                   isActive={pathname === item.url}
                 >
-                  <Link
-                    href={item.url ?? ""}
+                  <button
+                    onClick={handleLogOut}
                     className={cn(
                       active === item.url
-                        ? "bg-muted-foreground/10 text-[#32BA55]"
+                        ? "bg-muted-foreground/10 text-destructive"
                         : "",
                       "mx-0 w-full py-5"
                     )}
@@ -138,12 +154,12 @@ export default function DMSSidebar() {
                     <span
                       className={cn(
                         "font-medium",
-                        item.url === pathname && "text-[#32BA55]"
+                        item.url === pathname && "text-destructive"
                       )}
                     >
                       {item.title}
                     </span>
-                  </Link>
+                  </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
@@ -170,7 +186,7 @@ const SidebarHeaderPart = () => {
           <SidebarMenuButton
             asChild
             size={"sm"}
-            className='hover:bg-transparent my-[9.5px]'
+            className='hover:bg-transparent my-[11.5px]'
           >
             <Link href={"/"} className=' flex gap-1 pl-6 '>
               {/* <Image

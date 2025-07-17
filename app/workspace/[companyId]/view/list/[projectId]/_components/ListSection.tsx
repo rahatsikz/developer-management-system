@@ -107,7 +107,7 @@ export default function ListSection({ taskList, setTaskList }: any) {
         </Table>
         {/* card */}
         <div className='lg:hidden'>
-          <div className='grid md:grid-cols-2 gap-4 mb-4'>
+          <div className='grid md:grid-cols-2 gap-3 mb-4'>
             {taskList.map((item: any) => (
               <ListCard key={item.id} item={item} />
             ))}
