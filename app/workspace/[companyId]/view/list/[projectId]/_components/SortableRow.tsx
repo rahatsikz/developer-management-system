@@ -5,7 +5,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Check, ChevronRight, Edit, GripIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { statusOptions } from "@/constant";
+import { statusOptions } from "@/data";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { formatISO } from "date-fns";

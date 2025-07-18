@@ -1,9 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { Form } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { Grid2X2, GripVertical, Layers } from "lucide-react";
-import { Select } from "@/components/ui/Select";
-import { dummyFields, groupOptions } from "@/constant";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
+import { dummyFields, groupOptions } from "@/data";
 import {
   Sheet,
   SheetContent,
@@ -74,15 +80,35 @@ const FilterBar = () => {
     <div className='mt-0.5 ml-0.5'>
       <Form {...form}>
         <form className='flex gap-4 items-center'>
-          <Select
+          <FormField
+            control={form.control}
             name='group'
-            options={groupOptions}
-            formControl={form.control}
-            icon={<Layers />}
-            label='Group'
-            labelPosition='center'
-            className='rounded-full'
+            render={({ field }) => (
+              <FormItem className='mt-2'>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className='rounded-full !bg-background text-sm !text-muted-foreground [&>svg]:hidden px-4'>
+                      <div className='flex items-center gap-1'>
+                        <Layers className='mr-2 h-4 w-4 text-muted-foreground' />
+                        <SelectValue />
+                      </div>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className='bg-background'>
+                    {groupOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
           />
+
           <Sheet>
             <SheetTrigger asChild>
               <Button
@@ -96,7 +122,7 @@ const FilterBar = () => {
                 Columns
               </Button>
             </SheetTrigger>
-            <SheetContent className='right-4 top-[146px] bottom-6 h-auto rounded-e-xl'>
+            <SheetContent className='md:right-4 top-[118px] md:top-[125px] w-full md:bottom-1 h-auto rounded-e-xl'>
               <SheetHeader>
                 <SheetTitle>Fields</SheetTitle>
                 <SheetDescription></SheetDescription>

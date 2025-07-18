@@ -22,7 +22,7 @@ import {
 // import { DateDetails } from "./date-details";
 // import type { Booking } from "@/types";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { dummyTaskList } from "@/constant";
+import { dummyTaskList } from "@/data";
 import Card from "./task-details";
 
 export function CalendarView() {

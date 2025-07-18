@@ -9,32 +9,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { Building2, Menu, Settings2 } from "lucide-react";
+import { Menu } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { SidebarOptions } from "@/data";
 
 export default function SidebarHeader() {
   const pathname = usePathname();
-  const activeTab = [
-    ...[
-      {
-        title: "Companies",
-        url: "/workspace/company",
-        icon: ({ ...props }: React.HTMLAttributes<SVGElement>) => (
-          <Building2 className={cn(props.className)} />
-        ),
-      },
-    ],
-    ...[
-      {
-        title: "Settings",
-        url: "/settings",
-        icon: ({ ...props }: React.HTMLAttributes<SVGElement>) => (
-          <Settings2 className={cn(props.className)} />
-        ),
-      },
-    ],
-  ].find((item) => item.url === pathname);
+  const activeTab = SidebarOptions.find((item) => item.url === pathname);
 
   return (
     <>
@@ -45,8 +26,8 @@ export default function SidebarHeader() {
             <div className='flex items-center gap-2'>
               <div className='hidden size-8 items-center justify-center rounded-md bg-secondary md:flex'>
                 <activeTab.icon
+                  size={16}
                   //   active={"true"}
-                  className='size-4'
                   //   stroke={activeTab ? "#32BA55" : "#151A20"}
                 />
               </div>

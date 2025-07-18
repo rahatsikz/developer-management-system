@@ -11,7 +11,7 @@ import { DatePicker } from "@/components/ui/DatePicker";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { MultiSelect } from "@/components/ui/MultiSelect";
-import { dummyAssigne, priorityOptions, statusOptions } from "@/constant";
+import { dummyAssigne, priorityOptions, statusOptions } from "@/data";
 import { cn } from "@/lib/utils";
 import { Check, CircleDashed, Edit, Flag, Plus, User } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";

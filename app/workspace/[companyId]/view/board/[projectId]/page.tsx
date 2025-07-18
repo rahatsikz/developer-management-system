@@ -1,5 +1,5 @@
 "use client";
-import { dummyTaskList, statusOptions } from "@/constant";
+import { dummyTaskList, statusOptions } from "@/data";
 import React, { useEffect, useState } from "react";
 import Column from "./_components/Column";
 import {

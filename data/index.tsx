@@ -1,10 +1,13 @@
 import { addDays } from "date-fns";
 import {
+  Building2,
   CircleCheckBig,
   CircleDashed,
   CircleDot,
   CircleFadingArrowUp,
   Flag,
+  Folder,
+  LucideIcon,
   User,
 } from "lucide-react";
 
@@ -171,5 +174,22 @@ export const dummyFields = [
     name: "comments",
     label: "Comments",
     checked: false,
+  },
+];
+
+export const SidebarOptions: {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+}[] = [
+  {
+    title: "Companies",
+    url: "/workspace/company",
+    icon: Building2,
+  },
+  {
+    title: "Projects",
+    url: "/workspace/projects",
+    icon: Folder,
   },
 ];

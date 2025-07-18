@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { dummyAssigne, priorityOptions, statusOptions } from "@/constant";
+import { dummyAssigne, priorityOptions, statusOptions } from "@/data";
 import { Button } from "@/components/ui/button";
 import { CircleDashed, Flag, Plus, UserPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
