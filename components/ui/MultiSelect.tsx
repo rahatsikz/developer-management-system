@@ -33,7 +33,7 @@ export type OptionProps = {
   value: string;
   label: string;
   acronym?: string;
-  id: number;
+  id: string;
 };
 
 export interface MultiSelectProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -42,19 +42,43 @@ export interface MultiSelectProps extends React.HTMLAttributes<HTMLDivElement> {
   icon?: React.ReactNode;
   name: string;
   formControl: any;
+  placeholder?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
-  ({ options, label, icon, name, formControl, ...props }, ref) => {
+  (
+    {
+      options,
+      label,
+      icon,
+      name,
+      formControl,
+      placeholder,
+      open,
+      onOpenChange,
+      ...props
+    },
+    ref
+  ) => {
+    const [internalPopoverOpen, setInternalPopoverOpen] = React.useState(false);
+    const popoverOpen = open !== undefined ? open : internalPopoverOpen;
+    const setPopoverOpen =
+      onOpenChange !== undefined ? onOpenChange : setInternalPopoverOpen;
     return (
       <FormField
         control={formControl}
         name={name}
         render={({ field }) => (
-          <FormItem>
+          <FormItem className='relative z-[999]'>
             {label ? <FormLabel>{label}</FormLabel> : null}
             <FormControl>
-              <Popover>
+              <Popover
+                open={popoverOpen}
+                onOpenChange={setPopoverOpen}
+                modal={true}
+              >
                 <PopoverTrigger asChild>
                   <Button
                     id={props.id}
@@ -64,6 +88,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
                       "data-[state=open]:ring-2 data-[state=open]:ring-primary data-[state=open]:bg-muted",
                       props.className
                     )}
+                    // ref={ref}
                     style={props.style}
                   >
                     {field.value &&
@@ -75,7 +100,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
                           .map((option: OptionProps, idx: number) => (
                             <span
                               key={idx}
-                              className='text-xs bg-accent rounded-full size-7 flex items-center justify-center text-foreground'
+                              className='text-[10px] border bg-accent rounded-full size-7 flex items-center justify-center text-foreground'
                             >
                               {option.acronym || option.label}
                             </span>
@@ -83,15 +108,19 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
                       </div>
                     ) : (
                       <span className='text-muted-foreground'>
-                        {icon || "Select options"}
+                        {icon}
+                        {placeholder && (
+                          <span className='pl-1'>{placeholder}</span>
+                        )}
                       </span>
                     )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
-                  className='w-[200px] p-0'
+                  className='w-full p-0'
                   align='start'
                   ref={ref}
+                  sideOffset={12}
                 >
                   <OptionList
                     onChange={(selectedOptions) =>
@@ -146,7 +175,7 @@ function OptionList({
               <label key={item.id} htmlFor={item.value}>
                 <CommandItem className='flex items-center justify-between cursor-pointer'>
                   <div className='flex items-center gap-2'>
-                    <span className='text-xs bg-accent rounded-full size-7 flex items-center justify-center text-foreground'>
+                    <span className='text-[10px] border bg-accent rounded-full size-7 flex items-center justify-center text-foreground'>
                       {item.acronym}
                     </span>
                     <span>{item.label}</span>

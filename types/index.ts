@@ -22,13 +22,9 @@ export interface Team {
 export interface Project {
   id: string;
   name: string;
-  description: string;
-  team: Team;
-  teamId: string;
   company: Company;
   companyId: string;
-  repo: Repository;
-  tasks: Task[];
+  users: User[];
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import ListSection from "./_components/ListSection";
-import { dummyTaskList, statusOptions } from "@/constant";
+import { dummyTaskList, statusOptions } from "@/data";
 import FilterBar from "./_components/FilterBar";
 import { cn } from "@/lib/utils";
 

@@ -20,11 +20,20 @@ export const useSendOtpToEmail = () => {
 // verify OTP
 export const useVerifyOtp = () => {
   return useMutation({
-    mutationFn: async ({ email, code }: { email: string; code: string }) => {
+    mutationFn: async ({
+      email,
+      code,
+      companyId,
+    }: {
+      email: string;
+      code: string;
+      companyId?: string;
+    }) => {
       try {
         const response = await axiosInstance.post("/auth/verify-code", {
           email,
           code,
+          companyId: companyId ? companyId : undefined,
         });
         return response.data;
       } catch (error) {
@@ -40,6 +49,28 @@ export const useLogout = () => {
     mutationFn: async () => {
       try {
         const response = await axiosInstance.post("/auth/logout");
+        return response.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+  });
+};
+
+export const useInviteEmployees = () => {
+  return useMutation({
+    mutationFn: async ({
+      emails,
+      companyId,
+    }: {
+      emails: string[];
+      companyId: string;
+    }) => {
+      try {
+        const response = await axiosInstance.post("/auth/invite-employee", {
+          emails,
+          companyId,
+        });
         return response.data;
       } catch (error) {
         throw error;

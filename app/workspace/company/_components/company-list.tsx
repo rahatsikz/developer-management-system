@@ -1,6 +1,5 @@
 "use client";
 import { useGetMyCompanies } from "@/api/company.query";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardHeader,
@@ -12,6 +11,7 @@ import {
 import { useAuthStore } from "@/store/use-auth-store";
 import { Company } from "@/types";
 import { Building2, FolderKanban, Loader2, Users } from "lucide-react";
+import Link from "next/link";
 
 export default function CompanyList() {
   const { user } = useAuthStore((state) => state);
@@ -37,40 +37,31 @@ export default function CompanyList() {
 
 function CompanyCard({ company }: { company: Company }) {
   return (
-    <Card className='overflow-hidden'>
-      <CardHeader className='pb-2'>
-        <CardTitle className='flex items-center gap-2'>
-          <Building2 className='h-5 w-5 text-muted-foreground' />
-          {company.name}
-        </CardTitle>
-        <CardDescription>
-          Created on {new Date(company.createdAt).toLocaleDateString()}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className='pb-2'>
-        <div className='flex items-center gap-4 text-sm'>
-          <div className='flex items-center gap-1'>
-            <Users className='h-4 w-4 text-muted-foreground' />
-            <span>{company.users.length || 0} users</span>
+    <Link href={`/workspace/company/${company.id}/details`}>
+      <Card className='overflow-hidden cursor-pointer'>
+        <CardHeader className='pb-3'>
+          <CardTitle className='flex items-center gap-2'>
+            <Building2 className='h-5 w-5 text-muted-foreground' />
+            {company.name}
+          </CardTitle>
+          <CardDescription>
+            Created on {new Date(company.createdAt).toLocaleDateString()}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className='pb-2'>
+          <div className='flex items-center gap-4 text-sm'>
+            <div className='flex items-center gap-1.5'>
+              <Users className='h-4 w-4 text-muted-foreground' />
+              <span>{company.users.length || 0} users</span>
+            </div>
+            <div className='flex items-center gap-1.5'>
+              <FolderKanban className='h-4 w-4 text-muted-foreground' />
+              <span>{company?.projects?.length || 0} projects</span>
+            </div>
           </div>
-          <div className='flex items-center gap-1'>
-            <FolderKanban className='h-4 w-4 text-muted-foreground' />
-            <span>{company?.projects?.length || 0} projects</span>
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter>
-        <div className='flex flex-wrap gap-2'>
-          {company?.teams?.map((team) => (
-            <Badge key={team.id} variant='outline'>
-              {team.name}
-            </Badge>
-          ))}
-          {company?.teams?.length === 0 && (
-            <span className='text-sm text-muted-foreground'>No teams</span>
-          )}
-        </div>
-      </CardFooter>
-    </Card>
+        </CardContent>
+        <CardFooter></CardFooter>
+      </Card>
+    </Link>
   );
 }

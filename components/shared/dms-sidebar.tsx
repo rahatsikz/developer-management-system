@@ -19,10 +19,11 @@ import { Separator } from "@/components/ui/separator";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Building2, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useLogout } from "@/api/auth.query";
 import { useAuthStore } from "@/store/use-auth-store";
 import { toast } from "sonner";
+import { SidebarOptions } from "@/data";
 
 export default function DMSSidebar() {
   const pathname = usePathname();
@@ -59,47 +60,45 @@ export default function DMSSidebar() {
           <SidebarGroupContent className='overflow-y-hidden'>
             <ScrollArea className='h-full'>
               <SidebarMenu className={cn(open && "px-3")}>
-                {[
-                  {
-                    title: "Companies",
-                    url: "/workspace/company",
-                    icon: () => <Building2 />,
-                  },
-                ].map((item) => (
+                {SidebarOptions.map((item) => (
                   <SidebarMenuItem
                     className='flex items-center justify-center'
                     key={item.title}
                   >
                     <SidebarMenuButton
-                      className={cn("hover:text-[#32BA55]")}
+                      // className={cn("hover:text-[#32BA55]")}
                       asChild
                       onMouseEnter={() => {
                         setActive(item.url);
                       }}
                       onMouseLeave={() => setActive(pathname)}
-                      isActive={pathname === item.url}
+                      isActive={pathname.includes(item.url)}
                       onClick={() => isMobile && setOpenMobile(false)}
                     >
                       <Link
                         href={item.url}
                         className={cn(
-                          active === item.url
+                          active.includes(item.url)
                             ? "bg-muted-foreground/10 text-[#32BA55]"
                             : "",
                           "mx-0 w-full py-5 px-3"
                         )}
                       >
                         <item.icon
-                        //   active={
-                        //     active === item.url || pathname === item.url
-                        //       ? "true"
-                        //       : "false"
-                        //   }
+                          //   active={
+                          //     active === item.url || pathname === item.url
+                          //       ? "true"
+                          //       : "false"
+                          //   }
+                          className={cn(
+                            // "size-6",
+                            pathname.includes(item.url) && "text-[#32BA55]"
+                          )}
                         />
                         <span
                           className={cn(
                             "font-medium pl-1",
-                            item.url === pathname && "text-[#32BA55]"
+                            pathname.includes(item.url) && "text-[#32BA55]"
                           )}
                         >
                           {item.title}

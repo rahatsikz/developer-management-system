@@ -30,3 +30,20 @@ export const useCreateCompany = () => {
     },
   });
 };
+
+// get company by id
+export const useGetCompany = (id: string) => {
+  return useQuery({
+    queryKey: ["company", id],
+    queryFn: async () => {
+      try {
+        const response = await axiosInstance.get(`/company/${id}`);
+        return response.data.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+    staleTime: 1000 * 60 * 5,
+    enabled: !!id,
+  });
+};
