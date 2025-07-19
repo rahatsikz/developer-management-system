@@ -100,7 +100,7 @@ export function DataTable<TData, TValue>({
     <div className='space-y-4'>
       <ScrollArea
         className={cn(
-          "h-[calc(80vh-220px)] rounded-lg border md:h-[calc(90dvh-240px)] ",
+          "h-[calc(80vh-220px)] rounded-lg border md:h-[calc(90dvh-240px)] max-lg:w-[calc(100dvw-25px)]",
           props.className
         )}
       >

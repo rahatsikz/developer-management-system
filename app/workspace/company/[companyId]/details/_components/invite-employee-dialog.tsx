@@ -70,11 +70,15 @@ export function InviteEmployeeDialog() {
           Invite Employees
         </Button>
       </DialogTrigger>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent className='sm:max-w-[480px]'>
         <DialogHeader>
           <DialogTitle>Invite Employees</DialogTitle>
-          <DialogDescription>
-            Enter the email addresses of the employees to invite.
+          <DialogDescription className='text-[13px] text-muted-foreground'>
+            Type email and press{" "}
+            <code className='bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono'>
+              Enter
+            </code>{" "}
+            to save.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

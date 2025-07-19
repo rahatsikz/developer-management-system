@@ -24,7 +24,7 @@ export default function DetailContent() {
   console.log(data);
 
   return (
-    <div className='mt-6 h-[calc(100dvh-72.5px)]'>
+    <div className='mt-6 h-[calc(100dvh-72.5px)] max-lg:px-3'>
       <button
         className='flex items-center gap-1 cursor-pointer'
         onClick={() => back()}
@@ -32,7 +32,7 @@ export default function DetailContent() {
         <ChevronLeft size={14} className='text-muted-foreground' />
         <span className='text-xs text-muted-foreground'>Go Back</span>
       </button>
-      <div className='flex items-center justify-between mt-2 mb-4 px-1.5'>
+      <div className='flex items-center justify-between mt-2 mb-3.5 px-1.5'>
         <h1 className='text-2xl font-bold '> {data.name}</h1>
         <CreateProjectDialog />
       </div>

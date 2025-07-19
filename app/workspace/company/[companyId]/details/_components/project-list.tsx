@@ -42,15 +42,8 @@ export default function ProjectList() {
     );
   }
 
-  // if (isFetching)
-  //   return (
-  //     <div className='flex items-center gap-2'>
-  //       <Loader2 className='animate-spin size-4' />
-  //       <span>Loading...</span>
-  //     </div>
-  //   );
   return (
-    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+    <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4'>
       {data?.map((project: Project) => (
         <ProjectCard key={project.id} {...{ project }} />
       ))}

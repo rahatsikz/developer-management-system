@@ -33,7 +33,7 @@ export type OptionProps = {
   value: string;
   label: string;
   acronym?: string;
-  id: string;
+  id: string | number;
 };
 
 export interface MultiSelectProps extends React.HTMLAttributes<HTMLDivElement> {
