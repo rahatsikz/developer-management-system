@@ -1,4 +1,5 @@
 import axiosInstance from "@/lib/axios";
+import { Project } from "@/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 // create new project
@@ -45,7 +46,7 @@ export const useGetProjects = ({
 export const useGetProject = (id: string) => {
   return useQuery({
     queryKey: ["project", id],
-    queryFn: async () => {
+    queryFn: async (): Promise<Project> => {
       try {
         const response = await axiosInstance.get(`/project/${id}`);
         return response.data.data;

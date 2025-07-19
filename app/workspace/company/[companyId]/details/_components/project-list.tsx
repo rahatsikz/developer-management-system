@@ -52,11 +52,12 @@ export default function ProjectList() {
 }
 
 function ProjectCard({ project }: { project: Project }) {
+  const { companyId } = useParams();
   return (
     // <Link href={`/workspace/company/${company.id}/details`}>
-    <Card className='overflow-hidden cursor-pointer'>
+    <Card className='overflow-hidden cursor-pointer '>
       <CardHeader className='pb-3 space-y-2'>
-        <CardTitle className='flex items-center gap-2'>
+        <CardTitle className='flex items-center gap-2 capitalize'>
           <Folder className='h-5 w-5 text-muted-foreground' />
           {project.name}
         </CardTitle>
@@ -73,7 +74,10 @@ function ProjectCard({ project }: { project: Project }) {
         </div>
       </CardContent>
       <CardFooter className='justify-end'>
-        <AddNewMemberDialog projectId={project.id} />
+        <AddNewMemberDialog
+          projectId={project.id}
+          companyId={companyId as string}
+        />
       </CardFooter>
     </Card>
     // </Link>

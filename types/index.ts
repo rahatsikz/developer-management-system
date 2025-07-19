@@ -25,8 +25,21 @@ export interface Project {
   company: Company;
   companyId: string;
   users: User[];
+  Spaces: Space[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface Space {
+  id: string;
+  name: string;
+  repo: Repository;
+  tasks: Task[];
+  members: User[];
+  createdAt: Date;
+  updatedAt: Date;
+  project: Project;
+  projectId: string;
 }
 
 export interface User {

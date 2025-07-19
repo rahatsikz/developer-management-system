@@ -24,7 +24,7 @@ export default function DetailContent() {
   console.log(data);
 
   return (
-    <div className='mt-6 h-[calc(100dvh-72.5px)] max-lg:px-3'>
+    <div className='mt-6 h-[calc(100dvh-72.5px)] max-lg:px-3 px-1'>
       <button
         className='flex items-center gap-1 cursor-pointer'
         onClick={() => back()}
