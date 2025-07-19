@@ -17,9 +17,9 @@ import { useDelayedSpinner } from "@/hooks/use-delayed-spinner";
 
 export default function SpacesList() {
   const { projectId } = useParams();
-  const { data, isFetching } = useGetSpacesByProjectId(projectId as string);
+  const { data, isLoading } = useGetSpacesByProjectId(projectId as string);
 
-  const showSpinner = useDelayedSpinner(isFetching, !!data);
+  const showSpinner = useDelayedSpinner(isLoading, !!data);
 
   if (showSpinner) {
     return (

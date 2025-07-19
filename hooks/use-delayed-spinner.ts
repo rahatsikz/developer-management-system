@@ -6,7 +6,7 @@ export function useDelayedSpinner(isLoading: boolean, hasData: boolean) {
   useEffect(() => {
     let timeout: NodeJS.Timeout;
     if (!hasData && isLoading) {
-      timeout = setTimeout(() => setShowSpinner(true), 600);
+      timeout = setTimeout(() => setShowSpinner(true), 800);
     } else {
       setShowSpinner(false);
     }
