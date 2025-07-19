@@ -2,17 +2,19 @@ import { Suspense } from "react";
 import CompanyList from "./company-list";
 import { CreateCompanyDialog } from "./create-company-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProfileUpdateDialog } from "./profile-update";
 
 export default function CompanyPage() {
   return (
-    <div>
-      <div className='flex items-center justify-between mt-6 mb-4'>
-        <h1 className='text-2xl font-bold tracking-tight'>Companies</h1>
+    <div className='max-lg:px-3'>
+      <div className='flex items-center justify-between mt-6 mb-3.5'>
+        <h1 className='text-2xl font-bold tracking-normal pl-1'>Companies</h1>
         <CreateCompanyDialog />
       </div>
       <Suspense fallback={<CompanyListSkeleton />}>
         <CompanyList />
       </Suspense>
+      <ProfileUpdateDialog />
     </div>
   );
 }
