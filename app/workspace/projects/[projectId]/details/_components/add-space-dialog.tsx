@@ -19,9 +19,8 @@ import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
-import { useCreateProject } from "@/api/project.query";
 import { useParams } from "next/navigation";
-import { useAuthStore } from "@/store/use-auth-store";
+import { useCreateSpace } from "@/api/space.query";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -31,7 +30,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function CreateProjectDialog() {
+export function AddSpaceDialog() {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -42,31 +41,28 @@ export function CreateProjectDialog() {
     },
   });
 
-  const { mutate: createProject, isPending } = useCreateProject();
-  const { companyId } = useParams();
-
-  const { user } = useAuthStore((state) => state);
+  const { mutate: createSpace, isPending } = useCreateSpace();
+  const { projectId } = useParams();
 
   async function onSubmit(values: FormValues) {
     try {
       const data = {
         name: values.name,
-        companyId: companyId as string,
-        userId: user?.id ?? "",
+        projectId: projectId as string,
       };
-      createProject(data, {
+      createSpace(data, {
         onSuccess: () => {
-          toast.success("Project created successfully");
-          queryClient.invalidateQueries({ queryKey: ["projects"] });
+          toast.success("Space created successfully");
+          queryClient.invalidateQueries({ queryKey: ["spaces"] });
           form.reset();
           setOpen(false);
         },
         onError: () => {
-          toast.error("Failed to create Project");
+          toast.error("Failed to create space");
         },
       });
     } catch (error) {
-      console.error("Failed to create Project:", error);
+      console.error("Failed to create space:", error);
     }
   }
 
@@ -75,14 +71,14 @@ export function CreateProjectDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className='mr-2 h-4 w-4' />
-          New Project
+          New Space
         </Button>
       </DialogTrigger>
       <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>
-          <DialogTitle>Start new project</DialogTitle>
+          <DialogTitle>Create new space</DialogTitle>
           <DialogDescription>
-            Enter the details for your new project.
+            Enter the details for your new space.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -90,13 +86,13 @@ export function CreateProjectDialog() {
             <Input
               formControl={form.control}
               name='name'
-              placeholder='Project name'
+              placeholder='Space name'
               disabled={isPending}
               className='capitalize'
             />
             <DialogFooter>
               <Button type='submit' disabled={isPending}>
-                {isPending ? "Creating..." : "Create Project"}
+                {isPending ? "Creating..." : "Create Space"}
               </Button>
             </DialogFooter>
           </form>

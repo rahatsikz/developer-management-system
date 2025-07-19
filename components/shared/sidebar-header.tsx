@@ -19,7 +19,7 @@ export default function SidebarHeader() {
 
   return (
     <>
-      <div className='hidden min-h-[72.5px] bg-sidebar w-full items-center justify-between border-b px-6 shadow-lg md:flex'>
+      <div className='hidden min-h-[72.5px] bg-sidebar w-full items-center justify-between border-b px-7 shadow-lg md:flex'>
         <div className='flex w-full items-center gap-1 lg:gap-3'>
           <SidebarToggler />
           {activeTab && (

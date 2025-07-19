@@ -77,11 +77,11 @@ function EmailChipInput({
       {value.map((email, index) => (
         <span
           key={index}
-          className='bg-muted text-muted-foreground rounded-full px-3 py-1 text-sm flex items-center gap-1'
+          className='bg-muted text-foreground/80 text-xs rounded-full px-3 py-1  flex items-center gap-1.5'
         >
           {email}
           <button type='button' onClick={() => removeEmail(index)}>
-            <X className='h-4 w-4' />
+            <X className='size-3 mt-0.5' />
           </button>
         </span>
       ))}

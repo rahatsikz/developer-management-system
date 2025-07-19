@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { useAuthStore } from "@/store/use-auth-store";
 import { Company } from "@/types";
+import { format } from "date-fns";
 import { Building2, FolderKanban, Loader2, Users } from "lucide-react";
 import Link from "next/link";
 
@@ -38,14 +39,14 @@ export default function CompanyList() {
 function CompanyCard({ company }: { company: Company }) {
   return (
     <Link href={`/workspace/company/${company.id}/details`}>
-      <Card className='overflow-hidden cursor-pointer'>
+      <Card className='overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary'>
         <CardHeader className='pb-3'>
-          <CardTitle className='flex items-center gap-2'>
+          <CardTitle className='flex items-center gap-2 capitalize'>
             <Building2 className='h-5 w-5 text-muted-foreground' />
             {company.name}
           </CardTitle>
           <CardDescription>
-            Created on {new Date(company.createdAt).toLocaleDateString()}
+            Created on {format(company.createdAt, "PP")}
           </CardDescription>
         </CardHeader>
         <CardContent className='pb-2'>

@@ -15,19 +15,19 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
-import { useGetProject, useUpdateProject } from "@/api/project.query";
+import { useGetProject } from "@/api/project.query";
 import { MultiSelect, OptionProps } from "@/components/ui/MultiSelect";
-import { useGetCompany } from "@/api/company.query";
 import { User } from "@/types";
 import { useParams } from "next/navigation";
 import { Plus } from "lucide-react";
+import { useGetSpaceById, useUpdateSpace } from "@/api/space.query";
 
-export function AddNewMemberDialog({
+export function AddSpaceMemberDialog({
   projectId,
-  companyId,
+  spaceId,
 }: {
   projectId: string;
-  companyId: string;
+  spaceId: string;
 }) {
   const [open, setOpen] = useState(false);
   const [isMultiSelectOpen, setIsMultiSelectOpen] = useState(false);
@@ -41,15 +41,15 @@ export function AddNewMemberDialog({
     },
   });
 
-  const { mutate: updateProject, isPending } = useUpdateProject(projectId);
+  const { mutate: updateSpace, isPending } = useUpdateSpace(spaceId);
 
-  const { data: companyData, isFetching: companyIsFetching } = useGetCompany(
-    companyId as string
+  const { data: projectData, isFetching: companyIsFetching } = useGetProject(
+    projectId as string
   );
-  const { data: projectData, isFetching: projectIsFetching } =
-    useGetProject(projectId);
+  const { data: spaceData, isFetching: projectIsFetching } =
+    useGetSpaceById(spaceId);
 
-  //   console.log({ projectData, companyData });
+  //   console.log({ projectData, projectData });
 
   const { projectId: projectIdParam } = useParams();
 
@@ -59,42 +59,36 @@ export function AddNewMemberDialog({
         userIds: values.members.map((member: OptionProps) => member.id) ?? [],
       };
 
-      updateProject(data, {
+      updateSpace(data, {
         onSuccess: () => {
-          toast.success("Team members updated successfully");
+          toast.success("Team members added to space");
           setTimeout(() => {
-            if (projectIdParam) {
-              queryClient.invalidateQueries({ queryKey: ["project"] });
+            if (!projectIdParam) {
+              queryClient.invalidateQueries({ queryKey: ["space"] });
             } else {
-              queryClient.invalidateQueries({ queryKey: ["projects"] });
-              queryClient.invalidateQueries({ queryKey: ["project"] });
+              queryClient.invalidateQueries({ queryKey: ["spaces"] });
+              queryClient.invalidateQueries({ queryKey: ["space"] });
             }
           }, 800);
           setOpen(false);
           form.reset();
         },
         onError: () => {
-          toast.error("Failed to create Project");
+          toast.error("Failed to add members to space");
         },
       });
     } catch (error) {
-      console.error("Failed to create Project:", error);
+      console.error("Failed to add members to space", error);
     }
   }
 
   if (companyIsFetching || projectIsFetching) {
-    // return (
-    //   <div className='flex h-60 items-center justify-center'>
-    //     <Loader2 className='mr-2 animate-spin' />
-    //     <span>Loading...</span>
-    //   </div>
-    // );
     return null;
   }
 
   const availableMembers = getAvailableUserOptions(
-    companyData?.users,
-    projectData?.users ?? []
+    projectData?.users ?? [],
+    spaceData?.members ?? []
   );
 
   return (
@@ -117,7 +111,7 @@ export function AddNewMemberDialog({
       }}
     >
       <DialogTrigger asChild>
-        {projectIdParam ? (
+        {!projectIdParam ? (
           <Button>
             <Plus className='mr-1 size-4' />
             Add Member
@@ -153,7 +147,7 @@ export function AddNewMemberDialog({
             />
             <DialogFooter>
               <Button type='submit' disabled={isPending}>
-                {isPending ? "Adding..." : "Add to Project"}
+                {isPending ? "Adding..." : "Add to Space"}
               </Button>
             </DialogFooter>
           </form>
@@ -164,14 +158,14 @@ export function AddNewMemberDialog({
 }
 
 function getAvailableUserOptions(
-  companyUsers: User[],
-  projectUsers: User[]
+  projectUsers: User[],
+  spaceUsers: User[]
 ): OptionProps[] {
   // Step 1: Build a Set of project user IDs for fast lookup
-  const projectUserIds = new Set(projectUsers.map((u) => u.id));
+  const spaceUserIds = new Set(spaceUsers.map((u) => u.id));
 
   // Step 2: Filter out users already on the project
-  const candidates = companyUsers.filter((u) => !projectUserIds.has(u.id));
+  const candidates = projectUsers.filter((u) => !spaceUserIds.has(u.id));
 
   // Step 3: Generate unique acronyms
   const usedAcronyms = new Set<string>();

@@ -6,7 +6,7 @@ import { ProfileUpdateDialog } from "./profile-update";
 
 export default function CompanyPage() {
   return (
-    <div className='max-lg:px-3'>
+    <div className='max-lg:px-3 px-1'>
       <div className='flex items-center justify-between mt-6 mb-3.5'>
         <h1 className='text-2xl font-bold tracking-normal pl-1'>Companies</h1>
         <CreateCompanyDialog />
