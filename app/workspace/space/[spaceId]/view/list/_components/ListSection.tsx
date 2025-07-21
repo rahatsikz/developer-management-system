@@ -15,7 +15,7 @@ import AddTaskRow from "./AddTaskRow";
 import ListCard, { AddListCard } from "./ListCard";
 import { useColumnStore } from "@/store";
 
-export default function ListSection({ taskList, setTaskList }: any) {
+export default function ListSection({ taskList }: any) {
   const [isDragging, setIsDragging] = useState(false);
   const columnArr = useColumnStore((state) => state.ColumnArr);
 
@@ -40,22 +40,20 @@ export default function ListSection({ taskList, setTaskList }: any) {
     const overItem = taskList.find((item: any) => item.id === over.id);
 
     if (activeItem && overItem) {
-      setTaskList((prev: any) => {
-        // Find the positions of active and over items in the full task list
-        const oldIndex = prev.findIndex(
-          (item: any) => item.id === activeItem.id
-        );
-        const newIndex = prev.findIndex((item: any) => item.id === overItem.id);
-
-        if (oldIndex === -1 || newIndex === -1) return prev;
-
-        // Reorder the full task list
-        const updatedList = [...prev];
-        const [movedItem] = updatedList.splice(oldIndex, 1);
-        updatedList.splice(newIndex, 0, movedItem);
-
-        return updatedList;
-      });
+      //! Update the taskList state to reflect the new order
+      // setTaskList((prev: any) => {
+      //   // Find the positions of active and over items in the full task list
+      //   const oldIndex = prev.findIndex(
+      //     (item: any) => item.id === activeItem.id
+      //   );
+      //   const newIndex = prev.findIndex((item: any) => item.id === overItem.id);
+      //   if (oldIndex === -1 || newIndex === -1) return prev;
+      //   // Reorder the full task list
+      //   const updatedList = [...prev];
+      //   const [movedItem] = updatedList.splice(oldIndex, 1);
+      //   updatedList.splice(newIndex, 0, movedItem);
+      //   return updatedList;
+      // });
     }
   };
 
@@ -95,12 +93,7 @@ export default function ListSection({ taskList, setTaskList }: any) {
           </TableHeader>
           <TableBody>
             {taskList.map((item: any) => (
-              <SortbaleRow
-                key={item.id}
-                data={item}
-                isDragging={isDragging}
-                setTaskList={setTaskList}
-              />
+              <SortbaleRow key={item.id} data={item} isDragging={isDragging} />
             ))}
             <AddTaskRow />
           </TableBody>

@@ -23,7 +23,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         control={formControl}
         name={name}
         render={({ field }) => (
-          <FormItem className='flex flex-col gap-2'>
+          <FormItem className='flex flex-col gap-2 w-full'>
             {label && <FormLabel className='pl-1'>{label}</FormLabel>}
             <FormControl>
               <input

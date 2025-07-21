@@ -25,6 +25,7 @@ import { DndContext } from "@dnd-kit/core";
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useColumnStore } from "@/store";
+import { AddTaskDialog } from "../../_components/add-task-dialog";
 
 const FilterBar = () => {
   const form = useForm({
@@ -77,7 +78,7 @@ const FilterBar = () => {
   };
 
   return (
-    <div className='mt-0.5 ml-0.5'>
+    <div className='mt-0.5 ml-0.5 flex items-center justify-between'>
       <Form {...form}>
         <form className='flex gap-4 items-center'>
           <FormField
@@ -178,6 +179,7 @@ const FilterBar = () => {
           </Sheet>
         </form>
       </Form>
+      <AddTaskDialog />
     </div>
   );
 };

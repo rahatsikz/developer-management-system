@@ -19,22 +19,22 @@ export const dummyAssigne = [
 
 export const priorityOptions = [
   {
-    value: "urgent",
+    value: "URGENT",
     label: "Urgent",
     icon: <Flag style={{ stroke: "tomato", fill: "tomato" }} />,
   },
   {
-    value: "high",
+    value: "HIGH",
     label: "High",
     icon: <Flag style={{ stroke: "gold", fill: "gold" }} />,
   },
   {
-    value: "normal",
+    value: "NORMAL",
     label: "Normal",
     icon: <Flag style={{ stroke: "slateblue", fill: "slateblue" }} />,
   },
   {
-    value: "low",
+    value: "LOW",
     label: "Low",
     icon: <Flag style={{ stroke: "silver", fill: "silver" }} />,
   },
@@ -42,19 +42,19 @@ export const priorityOptions = [
 
 export const statusOptions = [
   {
-    value: "todo",
+    value: "TODO",
     label: "To Do",
     icon: <CircleDot style={{ strokeWidth: 3, stroke: "slategray" }} />,
   },
   {
-    value: "inprogress",
+    value: "IN_PROGRESS",
     label: "In Progress",
     icon: (
       <CircleFadingArrowUp style={{ strokeWidth: 3, stroke: "deepskyblue" }} />
     ),
   },
   {
-    value: "complete",
+    value: "COMPLETE",
     label: "Complete",
     icon: (
       <CircleCheckBig style={{ strokeWidth: 3, stroke: "lightseagreen" }} />

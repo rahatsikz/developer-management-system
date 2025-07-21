@@ -1,12 +1,19 @@
 "use client";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, List, SquareKanban } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 export default function ViewTabs() {
   const router = useRouter();
-  const { companyId, projectId } = useParams();
+  const { spaceId } = useParams();
+  const pathname = usePathname();
+
+  const [currectTab, setCurrentTab] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCurrentTab(pathname.split("/")[5]);
+  }, [pathname, router]);
 
   const tabsArr = [
     {
@@ -27,8 +34,8 @@ export default function ViewTabs() {
   ];
 
   const handleNavigate = (path: string) => {
-    router.push(`/workspace/${companyId}/view/${path}/${projectId}`);
-    localStorage.setItem("view", path);
+    router.push(`/workspace/space/${spaceId}/view/${path}`);
+    // localStorage.setItem("view", path);
   };
 
   // useEffect(() => {
@@ -48,8 +55,9 @@ export default function ViewTabs() {
 
   return (
     <Tabs
-      defaultValue={localStorage.getItem("view") || "list"}
-      className='py-0 fixed w-full bg-background z-50 pt-1'
+      defaultValue={"list"}
+      value={currectTab || "list"}
+      className='py-0 fixed w-full bg-background z-50 lg:pt-1'
     >
       <TabsList className='bg-transparent justify-start border-b border-input rounded-none w-full px-6 py-1 gap-1.5 h-12 lg:max-w-[calc(100%-19rem)]'>
         {tabsArr.map((tab) => (

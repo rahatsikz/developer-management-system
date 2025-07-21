@@ -7,32 +7,31 @@ import { TableCell } from "@/components/ui/table";
 import { UseFormReturn } from "react-hook-form";
 import { Flag, MessageCircle, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { dummyAssigne, priorityOptions, statusOptions } from "@/data";
+import { priorityOptions, statusOptions } from "@/data";
 import { Button } from "@/components/ui/button";
+import { useParams } from "next/navigation";
+import { useGetSpaceById } from "@/api/space.query";
+import { getUserOptions } from "../../_components/add-task-dialog";
 
 export const cellOfRows = (
   key: any,
   form: UseFormReturn<any>,
   data: any,
-  setTaskList: (list: any) => void
+  mutateField: (key: any) => void
+
+  // setTaskList: (list: any) => void
 ) => ({
-  assignee: (
-    <TableCell key={key}>
-      <form>
-        <MultiSelect
-          formControl={form.control}
-          name='assignee'
-          options={dummyAssigne}
-          icon={<User />}
-          className=' truncate'
-        />
-      </form>
-    </TableCell>
-  ),
+  assignee: <AssigneeCell key={key} form={form} mutateField={mutateField} />,
   dueDate: (
     <TableCell key={key}>
-      <form>
-        <DatePicker formController={form.control} name='dueDate' />
+      <form
+      // onSubmit={form.handleSubmit(() => mutateField("dueDate"))}
+      >
+        <DatePicker
+          formController={form.control}
+          name='dueDate'
+          onBlur={() => form.handleSubmit(() => mutateField("dueDate"))()}
+        />
       </form>
     </TableCell>
   ),
@@ -45,6 +44,7 @@ export const cellOfRows = (
           options={priorityOptions}
           icon={<Flag />}
           className={cn("truncate")}
+          onBlur={() => form.handleSubmit(() => mutateField("priority"))()}
         />
       </form>
     </TableCell>
@@ -57,6 +57,7 @@ export const cellOfRows = (
           name='status'
           options={statusOptions}
           className={cn("truncate")}
+          onBlur={() => form.handleSubmit(() => mutateField("status"))()}
         />
       </form>
     </TableCell>
@@ -74,12 +75,36 @@ export const cellOfRows = (
           </Button>
         </PopoverTrigger>
 
-        <CommentPopover
-          commnetsData={data.comments}
-          setTaskList={setTaskList}
-          id={data.id}
-        />
+        <CommentPopover commnetsData={data.comments} />
       </Popover>
     </TableCell>
   ),
 });
+
+const AssigneeCell = ({
+  form,
+  mutateField,
+}: {
+  form: UseFormReturn<any>;
+  mutateField: (key: any) => void;
+}) => {
+  const { spaceId } = useParams();
+  const { data, isLoading } = useGetSpaceById(spaceId as string);
+  if (isLoading) {
+    return null;
+  }
+  return (
+    <TableCell>
+      <form>
+        <MultiSelect
+          formControl={form.control}
+          name='assignees'
+          options={getUserOptions(data?.members || [])}
+          icon={<User />}
+          className=' truncate'
+          onBlur={() => form.handleSubmit(() => mutateField("assignees"))()}
+        />
+      </form>
+    </TableCell>
+  );
+};

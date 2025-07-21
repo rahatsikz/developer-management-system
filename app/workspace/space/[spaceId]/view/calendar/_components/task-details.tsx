@@ -1,9 +1,9 @@
 import { Form } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
-import { formConfig } from "../../../board/[projectId]/_components/FieldConfig";
 import { Label } from "@/components/ui/label";
-import { renderField } from "../../../board/[projectId]/_components/RenderField";
+import { formConfig } from "../../board/_components/FieldConfig";
+import { renderField } from "../../board/_components/RenderField";
 
 const Card = ({ task }: { task: any }) => {
   return (

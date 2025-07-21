@@ -61,10 +61,10 @@ export const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
         control={formControl}
         name={name}
         render={({ field }) => (
-          <FormItem>
+          <FormItem className='w-full'>
             {label ? <FormLabel>{label}</FormLabel> : null}
             <FormControl>
-              <Popover>
+              <Popover modal={true}>
                 <PopoverTrigger asChild>
                   <Button
                     id={props.id}
@@ -103,9 +103,10 @@ export const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
                   ref={ref}
                 >
                   <OptionList
-                    onChange={(selectedOption) =>
-                      field.onChange(selectedOption)
-                    }
+                    onChange={(selectedOption) => {
+                      field.onChange(selectedOption);
+                      props.onBlur?.(selectedOption as any);
+                    }}
                     options={options}
                   />
                 </PopoverContent>

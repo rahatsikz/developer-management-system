@@ -66,12 +66,13 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
     const popoverOpen = open !== undefined ? open : internalPopoverOpen;
     const setPopoverOpen =
       onOpenChange !== undefined ? onOpenChange : setInternalPopoverOpen;
+
     return (
       <FormField
         control={formControl}
         name={name}
         render={({ field }) => (
-          <FormItem className='relative z-[999]'>
+          <FormItem className='relative w-full'>
             {label ? <FormLabel>{label}</FormLabel> : null}
             <FormControl>
               <Popover
@@ -123,9 +124,10 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
                   sideOffset={12}
                 >
                   <OptionList
-                    onChange={(selectedOptions) =>
-                      field.onChange(selectedOptions)
-                    }
+                    onChange={(selectedOptions) => {
+                      field.onChange(selectedOptions);
+                      props.onBlur?.(selectedOptions as any);
+                    }}
                     options={options}
                     checkedState={
                       field.value?.filter(

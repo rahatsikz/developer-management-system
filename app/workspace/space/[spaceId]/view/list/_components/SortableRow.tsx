@@ -6,22 +6,48 @@ import { CSS } from "@dnd-kit/utilities";
 import { Check, ChevronRight, Edit, GripIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { statusOptions } from "@/data";
-import { useForm } from "react-hook-form";
+import { useForm, UseFormReturn } from "react-hook-form";
 import { Form } from "@/components/ui/form";
-import { formatISO } from "date-fns";
+// import { formatISO } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { AddSubTaskRow } from "./AddTaskRow";
 import { useColumnStore } from "@/store";
 import { cellOfRows } from "./AllListCell";
+import { getUserAcronym } from "@/lib/acronym";
+import { useUpdateTask } from "@/api/task.query";
+import {
+  QueryClient,
+  UseMutateFunction,
+  useQueryClient,
+} from "@tanstack/react-query";
+
+function useMutateField<FormValues>(
+  mutate: UseMutateFunction<any, unknown, Partial<FormValues>, unknown>,
+  form: UseFormReturn<any>,
+  queryClient: QueryClient
+) {
+  return (key: keyof FormValues) => {
+    const values = form.getValues();
+
+    const payload: any =
+      key === "assignees"
+        ? { assigneeIds: (values.assignees || []).map((a: any) => a.id) }
+        : { [key]: values[key] };
+
+    mutate(payload, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      },
+    });
+  };
+}
 
 export function SortbaleRow({
   data,
   isDragging,
-  setTaskList,
 }: {
   data: any;
   isDragging: boolean;
-  setTaskList: (list: any) => void;
 }) {
   const [subTasksOpen, setSubTasksOpen] = useState({
     id: data.id,
@@ -45,52 +71,32 @@ export function SortbaleRow({
 
   const form = useForm({
     defaultValues: {
-      name: data.name,
-      assignee: [
-        {
-          value: data?.assignee?.value,
-          label: data?.assignee?.label,
-          acronym: data?.assignee?.acronym,
-          id: data?.assignee?.id,
-        },
-      ],
+      title: data.title,
+      assignees: data.assignees.map((assignee: any) => ({
+        value: assignee.id,
+        label: assignee.name,
+        id: assignee.id,
+        acronym: getUserAcronym(assignee),
+      })),
       status: data.status,
       priority: data.priority,
       dueDate: data.dueDate,
     },
   });
 
+  const { mutate, isPending } = useUpdateTask(data.id);
+
   const { watch } = form;
 
   // Watching for changes to the `assigne` field
   const [assignee, status, priority, dueDate] = [
-    watch("assignee"),
+    watch("assignees"),
     watch("status"),
     watch("priority"),
     watch("dueDate"),
   ];
-  useEffect(() => {
-    // Create a mapping of the watched fields to their corresponding keys in the task
-    const updates = {
-      assignee: assignee,
-      status: status,
-      priority: priority,
-      dueDate: dueDate && formatISO(dueDate),
-    };
 
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value !== undefined) {
-        setTaskList((prev: any) =>
-          prev.map((item: any) => {
-            if (item.id === data.id) {
-              return { ...item, [key]: value };
-            }
-            return item;
-          })
-        );
-      }
-    });
-  }, [assignee, data.id, priority, setTaskList, status, dueDate]);
+  console.log(assignee, status, priority, dueDate);
 
   useEffect(() => {
     if (subTasksOpen.open && isDragging) {
@@ -126,6 +132,9 @@ export function SortbaleRow({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isNameEditing, data.id]);
+
+  const queryClient = useQueryClient();
+  const mutateField = useMutateField(mutate, form, queryClient);
 
   return (
     <>
@@ -196,7 +205,7 @@ export function SortbaleRow({
                     : "flex items-center justify-between w-full"
                 )}
               >
-                <p className='line-clamp-1'>{data?.name}</p>
+                <p className='line-clamp-1'>{isPending ? null : data.title}</p>
                 <Button
                   size={"icon"}
                   variant={"ghost"}
@@ -211,18 +220,7 @@ export function SortbaleRow({
               </div>
               <form
                 onSubmit={form.handleSubmit(() => {
-                  // console.log(form.getValues().name);
-                  setTaskList((prev: any) =>
-                    prev.map((item: any) => {
-                      if (item.id === data.id) {
-                        return {
-                          ...item,
-                          name: form.getValues().name,
-                        };
-                      }
-                      return item;
-                    })
-                  );
+                  mutateField("title");
                   setIsNameEditing(false);
                 })}
                 className={cn(
@@ -232,7 +230,7 @@ export function SortbaleRow({
                 )}
               >
                 <Input
-                  name='name'
+                  name='title'
                   formControl={form.control}
                   ref={inputRef}
                   type='text'
@@ -250,7 +248,7 @@ export function SortbaleRow({
 
           {columnArr.map(
             (item: any) =>
-              cellOfRows(item, form, data, setTaskList)[
+              cellOfRows(item, form, data, mutateField)[
                 item as keyof typeof cellOfRows
               ]
           )}
@@ -261,7 +259,6 @@ export function SortbaleRow({
           <SubtaskRow
             key={item?.id}
             data={item}
-            setTaskList={setTaskList}
             showSubTasks={subTasksOpen}
             mainRowId={data.id}
           />
@@ -275,12 +272,10 @@ export function SortbaleRow({
 
 function SubtaskRow({
   data,
-  setTaskList,
   showSubTasks,
-  mainRowId,
-}: {
+}: // mainRowId,
+{
   data: any;
-  setTaskList: (list: any) => void;
   showSubTasks: { id: string; open: boolean };
   mainRowId: string;
 }) {
@@ -303,45 +298,45 @@ function SubtaskRow({
     },
   });
 
-  const { watch } = form;
+  // const { watch } = form;
 
   // Watching for changes to the `assigne` field
-  const [assignee, status, priority, dueDate] = [
-    watch("assignee"),
-    watch("status"),
-    watch("priority"),
-    watch("dueDate"),
-  ];
-  useEffect(() => {
-    // Create a mapping of the watched fields to their corresponding keys in the task
-    const updates = {
-      assignee: assignee,
-      status: status,
-      priority: priority,
-      dueDate: dueDate && formatISO(dueDate),
-    };
+  // const [assignee, status, priority, dueDate] = [
+  //   watch("assignee"),
+  //   watch("status"),
+  //   watch("priority"),
+  //   watch("dueDate"),
+  // ];
+  // useEffect(() => {
+  //   // Create a mapping of the watched fields to their corresponding keys in the task
+  //   const updates = {
+  //     assignee: assignee,
+  //     status: status,
+  //     priority: priority,
+  //     dueDate: dueDate && formatISO(dueDate),
+  //   };
 
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value !== undefined) {
-        setTaskList((prev: any) =>
-          prev.map((task: any) => {
-            if (task.id === mainRowId) {
-              return {
-                ...task,
-                subTasks: (task.subTasks || []).map((subTask: any) => {
-                  if (subTask.id === data.id) {
-                    return { ...subTask, [key]: value };
-                  }
-                  return subTask;
-                }),
-              };
-            }
-            return task;
-          })
-        );
-      }
-    });
-  }, [assignee, mainRowId, priority, setTaskList, status, dueDate, data.id]);
+  //   Object.entries(updates).forEach(([key, value]) => {
+  //     if (value !== undefined) {
+  //       setTaskList((prev: any) =>
+  //         prev.map((task: any) => {
+  //           if (task.id === mainRowId) {
+  //             return {
+  //               ...task,
+  //               subTasks: (task.subTasks || []).map((subTask: any) => {
+  //                 if (subTask.id === data.id) {
+  //                   return { ...subTask, [key]: value };
+  //                 }
+  //                 return subTask;
+  //               }),
+  //             };
+  //           }
+  //           return task;
+  //         })
+  //       );
+  //     }
+  //   });
+  // }, [assignee, mainRowId, priority, setTaskList, status, dueDate, data.id]);
 
   // to edit the task name
   const [isNameEditing, setIsNameEditing] = useState(false);
@@ -404,25 +399,25 @@ function SubtaskRow({
             <form
               onSubmit={form.handleSubmit(() => {
                 // console.log(form.getValues().name);
-                setTaskList((prev: any) =>
-                  prev.map((task: any) => {
-                    if (task.id === mainRowId) {
-                      return {
-                        ...task,
-                        subTasks: (task.subTasks || []).map((subTask: any) => {
-                          if (subTask.id === data.id) {
-                            return {
-                              ...subTask,
-                              name: form.getValues().name,
-                            };
-                          }
-                          return subTask;
-                        }),
-                      };
-                    }
-                    return task;
-                  })
-                );
+                // setTaskList((prev: any) =>
+                //   prev.map((task: any) => {
+                //     if (task.id === mainRowId) {
+                //       return {
+                //         ...task,
+                //         subTasks: (task.subTasks || []).map((subTask: any) => {
+                //           if (subTask.id === data.id) {
+                //             return {
+                //               ...subTask,
+                //               name: form.getValues().name,
+                //             };
+                //           }
+                //           return subTask;
+                //         }),
+                //       };
+                //     }
+                //     return task;
+                //   })
+                // );
                 setIsNameEditing(false);
               })}
               className={cn(
@@ -450,7 +445,7 @@ function SubtaskRow({
 
         {columnArr.map(
           (item: any) =>
-            cellOfRows(item, form, data, setTaskList)[
+            cellOfRows(item, form, data, () => {})[
               item as keyof typeof cellOfRows
             ]
         )}
