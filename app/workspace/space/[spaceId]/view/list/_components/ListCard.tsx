@@ -11,29 +11,52 @@ import { DatePicker } from "@/components/ui/DatePicker";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { MultiSelect } from "@/components/ui/MultiSelect";
-import { dummyAssigne, priorityOptions, statusOptions } from "@/data";
+import { priorityOptions, statusOptions } from "@/data";
+import { getUserAcronym } from "@/lib/acronym";
 import { cn } from "@/lib/utils";
+import { Task } from "@/types";
 import { Check, CircleDashed, Edit, Flag, Plus, User } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
+import { getUserOptions } from "../../_components/add-task-dialog";
+import { useParams } from "next/navigation";
+import { useGetSpaceById } from "@/api/space.query";
+import { useMutateField } from "./SortableRow";
+import { useUpdateTask } from "@/api/task.query";
+import { useQueryClient } from "@tanstack/react-query";
 
-export default function ListCard({ item }: any) {
+export default function ListCard({ item }: { item: Task }) {
+  console.log(item, "items");
+
   const form = useForm({
     defaultValues: {
-      name: item.name,
-      assignee: [
-        {
-          value: item?.assignee?.value,
-          label: item?.assignee?.label,
-          acronym: item?.assignee?.acronym,
-          id: item?.assignee?.id,
-        },
-      ],
-      status: item.status || statusOptions[0].value,
+      title: item.title,
+      assignees: item.assignees.map((assignee: any) => ({
+        value: assignee.id,
+        label: assignee.name,
+        id: assignee.id,
+        acronym: getUserAcronym(assignee),
+      })),
+      status: item.status,
       priority: item.priority,
       dueDate: item.dueDate,
     },
   });
+
+  React.useEffect(() => {
+    form.reset({
+      title: item.title,
+      assignees: item.assignees.map((assignee: any) => ({
+        value: assignee.id,
+        label: assignee.name,
+        id: assignee.id,
+        acronym: getUserAcronym(assignee),
+      })),
+      status: item.status,
+      priority: item.priority,
+      dueDate: item.dueDate,
+    });
+  }, [item, form]);
 
   const [isNameEditing, setIsNameEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -58,6 +81,11 @@ export default function ListCard({ item }: any) {
     };
   }, [isNameEditing, item.id]);
 
+  const { mutate } = useUpdateTask(item.id);
+  const queryClient = useQueryClient();
+
+  const mutateField = useMutateField(mutate, form, queryClient);
+
   return (
     <Card className='w-full'>
       <Form {...form}>
@@ -73,7 +101,7 @@ export default function ListCard({ item }: any) {
                 isNameEditing ? "hidden" : "flex gap-4 items-center w-full"
               )}
             >
-              <CardTitle>{item.name}</CardTitle>
+              <CardTitle>{item.title}</CardTitle>
               <Button
                 size={"icon"}
                 variant={"ghost"}
@@ -89,6 +117,7 @@ export default function ListCard({ item }: any) {
             <form
               onSubmit={form.handleSubmit(() => {
                 // console.log(form.getValues().name);
+                mutateField("title");
                 setIsNameEditing(false);
               })}
               className={cn(
@@ -98,7 +127,7 @@ export default function ListCard({ item }: any) {
               )}
             >
               <Input
-                name='name'
+                name='title'
                 formControl={form.control}
                 ref={inputRef}
                 type='text'
@@ -119,7 +148,7 @@ export default function ListCard({ item }: any) {
           </div>
         </CardHeader>
         <CardContent className='sm:max-lg:p-4 sm:max-lg:pt-0'>
-          <AddTaskForm form={form} />
+          <AddTaskForm form={form} mutateField={mutateField} />
         </CardContent>
       </Form>
     </Card>
@@ -169,7 +198,7 @@ export function AddListCard() {
               type='text'
               className='w-full mb-5'
             />
-            <AddTaskForm form={form} />
+            <AddTaskForm form={form} mutateField={() => {}} />
 
             <div className='flex items-center mt-8 gap-3'>
               <Button
@@ -201,17 +230,29 @@ export function AddListCard() {
   );
 }
 
-function AddTaskForm({ form }: { form: UseFormReturn<any> }) {
+function AddTaskForm({
+  form,
+  mutateField,
+}: {
+  form: UseFormReturn<any>;
+  mutateField: (key: any) => void;
+}) {
+  const { spaceId } = useParams();
+  const { data, isLoading } = useGetSpaceById(spaceId as string);
+  if (isLoading) {
+    return null;
+  }
   return (
     <div className='gap-x-6 gap-y-2.5 grid grid-cols-2 '>
       <div>
         <CardDescription className='pl-1'>Assginee</CardDescription>
         <MultiSelect
           formControl={form.control}
-          name='assignee'
-          options={dummyAssigne}
+          name='assignees'
+          options={getUserOptions(data?.members || [])}
           icon={<User />}
           className='px-1 truncate hover:ring-0 data-[state=open]:ring-0 mt-0.5 whitespace-nowrap w-fit'
+          onBlur={() => mutateField("assignees")}
         />
       </div>
       <div>
@@ -222,6 +263,7 @@ function AddTaskForm({ form }: { form: UseFormReturn<any> }) {
           options={priorityOptions}
           icon={<Flag />}
           className={cn("truncate px-1 hover:ring-0 data-[state=open]:ring-0")}
+          onBlur={() => mutateField("priority")}
         />
       </div>
       <div>
@@ -232,6 +274,7 @@ function AddTaskForm({ form }: { form: UseFormReturn<any> }) {
           options={statusOptions}
           className={cn("truncate px-1 hover:ring-0 data-[state=open]:ring-0")}
           icon={<CircleDashed />}
+          onBlur={() => mutateField("status")}
         />
       </div>
       <div>
@@ -240,6 +283,7 @@ function AddTaskForm({ form }: { form: UseFormReturn<any> }) {
           formController={form.control}
           name='dueDate'
           className='px-1 hover:ring-0 data-[state=open]:ring-0'
+          onBlur={() => mutateField("dueDate")}
         />
       </div>
     </div>

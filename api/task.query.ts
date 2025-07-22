@@ -1,4 +1,5 @@
 import axiosInstance from "@/lib/axios";
+import { Task } from "@/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 // Create new task
@@ -25,7 +26,7 @@ export const useCreateTask = () => {
 export const useGetTasksBySpaceId = (spaceId: string) => {
   return useQuery({
     queryKey: ["tasks", spaceId],
-    queryFn: async () => {
+    queryFn: async (): Promise<Task[]> => {
       try {
         const response = await axiosInstance.get(`/tasks/space/${spaceId}`);
         return response.data.data;
@@ -37,7 +38,7 @@ export const useGetTasksBySpaceId = (spaceId: string) => {
   });
 };
 
-// up[date task
+// update task
 export const useUpdateTask = (id: string) => {
   return useMutation({
     mutationFn: async (payload: {
@@ -49,6 +50,37 @@ export const useUpdateTask = (id: string) => {
     }) => {
       try {
         const response = await axiosInstance.put(`/task/${id}`, payload);
+        return response.data.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+  });
+};
+
+// create comment
+export const useAddComment = (taskId: string) => {
+  return useMutation({
+    mutationFn: async (payload: { content: string; authorId: string }) => {
+      try {
+        const response = await axiosInstance.post(
+          `/task/${taskId}/comment`,
+          payload
+        );
+        return response.data.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+  });
+};
+
+// reorder
+export const useTaskReorder = () => {
+  return useMutation({
+    mutationFn: async (payload: { spaceId: string; taskIds: string[] }) => {
+      try {
+        const response = await axiosInstance.put(`/task/reorder`, payload);
         return response.data.data;
       } catch (error) {
         throw error;

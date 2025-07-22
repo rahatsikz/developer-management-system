@@ -104,23 +104,56 @@ export enum PRState {
   MERGED = "MERGED",
 }
 
-export type Task = {
+export interface SubTask {
   id: string;
   title: string;
-  description?: string;
-  projectId: string;
-  project: Project;
-  assigneeId?: string;
-  assignee?: User;
+  assignees: User[];
   status: TaskStatus;
+  priority?: TaskPriority;
+  createdAt: Date;
+  updatedAt: Date;
+  task: Task;
+  taskId: string;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  author: User;
+  authorId: string;
+  task: Task;
+  taskId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  assignees: User[];
+  priority?: TaskPriority;
+  dueDate?: Date;
+  status?: TaskStatus;
+  Comments: Comment[];
+  description?: string;
+  space: Space;
+  spaceId: string;
   pr?: PullRequest;
   createdAt: Date;
   updatedAt: Date;
-};
+  SubTasks: SubTask[];
+  order: number;
+}
 
 export enum TaskStatus {
-  OPEN = "OPEN",
+  TODO = "TODO",
   IN_PROGRESS = "IN_PROGRESS",
-  REVIEW = "REVIEW",
-  DONE = "DONE",
+  COMPLETE = "COMPLETE",
+}
+
+export enum TaskPriority {
+  LOW = "LOW",
+  NORMAL = "NORMAL",
+  HIGH = "HIGH",
+  URGENT = "URGENT",
 }

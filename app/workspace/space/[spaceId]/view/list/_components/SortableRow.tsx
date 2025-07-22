@@ -8,7 +8,6 @@ import { useEffect, useRef, useState } from "react";
 import { statusOptions } from "@/data";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { Form } from "@/components/ui/form";
-// import { formatISO } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { AddSubTaskRow } from "./AddTaskRow";
 import { useColumnStore } from "@/store";
@@ -20,8 +19,9 @@ import {
   UseMutateFunction,
   useQueryClient,
 } from "@tanstack/react-query";
+import { Task } from "@/types";
 
-function useMutateField<FormValues>(
+export function useMutateField<FormValues>(
   mutate: UseMutateFunction<any, unknown, Partial<FormValues>, unknown>,
   form: UseFormReturn<any>,
   queryClient: QueryClient
@@ -46,7 +46,7 @@ export function SortbaleRow({
   data,
   isDragging,
 }: {
-  data: any;
+  data: Task;
   isDragging: boolean;
 }) {
   const [subTasksOpen, setSubTasksOpen] = useState({
@@ -84,19 +84,22 @@ export function SortbaleRow({
     },
   });
 
+  useEffect(() => {
+    form.reset({
+      title: data.title,
+      assignees: data.assignees.map((assignee: any) => ({
+        value: assignee.id,
+        label: assignee.name,
+        id: assignee.id,
+        acronym: getUserAcronym(assignee),
+      })),
+      status: data.status,
+      priority: data.priority,
+      dueDate: data.dueDate,
+    });
+  }, [data, form]);
+
   const { mutate, isPending } = useUpdateTask(data.id);
-
-  const { watch } = form;
-
-  // Watching for changes to the `assigne` field
-  const [assignee, status, priority, dueDate] = [
-    watch("assignees"),
-    watch("status"),
-    watch("priority"),
-    watch("dueDate"),
-  ];
-
-  console.log(assignee, status, priority, dueDate);
 
   useEffect(() => {
     if (subTasksOpen.open && isDragging) {
@@ -169,7 +172,7 @@ export function SortbaleRow({
           >
             <Button
               className={cn(
-                data.subTasks?.length === 0 &&
+                data.SubTasks?.length === 0 &&
                   !subTasksOpen.open &&
                   "opacity-0",
                 isDragging ? "" : "group-hover:opacity-100"
@@ -190,7 +193,7 @@ export function SortbaleRow({
               <ChevronRight
                 className={cn(
                   subTasksOpen.open && "rotate-90",
-                  data.subTasks?.length === 0 && "text-muted-foreground"
+                  data.SubTasks?.length === 0 && "text-muted-foreground"
                 )}
               />
             </Button>
@@ -254,8 +257,8 @@ export function SortbaleRow({
           )}
         </Form>
       </TableRow>
-      {data?.subTasks?.length > 0 &&
-        data.subTasks.map((item: any) => (
+      {data?.SubTasks?.length > 0 &&
+        data.SubTasks.map((item: any) => (
           <SubtaskRow
             key={item?.id}
             data={item}

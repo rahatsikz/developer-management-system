@@ -1,3 +1,5 @@
+import { useGetSpaceById } from "@/api/space.query";
+import { useAddComment } from "@/api/task.query";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -16,16 +18,26 @@ import {
 } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { dummyAssigne, dummyTaskList } from "@/data";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/use-auth-store";
+import { Comment, Task } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PopoverClose } from "@radix-ui/react-popover";
+import { useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { AtSign } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-export function CommentPopover({ commnetsData }: any) {
+export function CommentPopover({ taskData }: { taskData: Task }) {
+  const commnetsData: Comment[] = taskData?.Comments || [];
+
+  const { spaceId } = useParams();
+
+  const { data: spaceData, isLoading } = useGetSpaceById(spaceId as string);
+
   const [popoverOpen, setPopoverOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -109,47 +121,27 @@ export function CommentPopover({ commnetsData }: any) {
 
   const commentData = watch("comment");
 
-  // 2. Define a submit handler.
+  const { mutate: addComment } = useAddComment(taskData.id);
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore((state) => state);
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-
-    // setTaskList((prev: any) => {
-    //   return prev.map((item: any) => {
-    //     if (!isSubtask) {
-    //       if (item.id === id) {
-    //         return {
-    //           ...item,
-    //           comments: [
-    //             ...item.comments,
-    //             { comment: values.comment, user: "John Doe" },
-    //           ],
-    //         };
-    //       }
-    //       return item;
-    //     } else {
-    //       return {
-    //         ...item,
-    //         subTasks: item.subTasks.map((subTask: any) => {
-    //           if (subTask.id === id) {
-    //             return {
-    //               ...subTask,
-    //               comments: [
-    //                 ...subTask.comments,
-    //                 { comment: values.comment, user: "John Doe" },
-    //               ],
-    //             };
-    //           }
-    //           return subTask;
-    //         }),
-    //       };
-    //     }
-    //   });
-    // });
-
-    form.reset({
-      comment: "",
-    });
+    addComment(
+      {
+        authorId: user?.id || "",
+        content: values.comment,
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["tasks"] });
+          form.reset({
+            comment: "",
+          });
+        },
+      }
+    );
   }
+
+  if (isLoading) return null;
 
   return (
     <PopoverContent
@@ -160,21 +152,26 @@ export function CommentPopover({ commnetsData }: any) {
       )}
     >
       <div className='space-y-2'>
-        {commnetsData?.map((item: any, index: number) => (
+        {commnetsData?.map((item: Comment, index: number) => (
           <div
             key={index}
-            className='px-2.5 py-2 border flex flex-col gap-1 rounded'
+            className='px-2.5 py-2 border flex flex-col gap-0 rounded'
           >
             <div className='flex justify-between items-center text-sm'>
-              <p className='font-semibold'>{item.user}</p>
+              <p className='font-semibold'>{item?.author?.name}</p>
               <p className='text-muted-foreground font-medium text-xs'>
-                {item.date || "16th Feb"}
+                {format(item?.createdAt, "PPP") || "16th Feb"}
               </p>
             </div>
             <CommentWithHighlights
-              comment={item.comment}
-              users={dummyAssigne}
-              tasks={dummyTaskList.map((item) => item.name)}
+              comment={item.content}
+              users={
+                spaceData?.members.map((member: any) => ({
+                  label: member.name,
+                  value: member.id,
+                })) || []
+              }
+              tasks={spaceData?.tasks.map((task: any) => task.title) || []}
             />
           </div>
         ))}
@@ -230,25 +227,25 @@ export function CommentPopover({ commnetsData }: any) {
 
                           <CommandSeparator />
                           <CommandGroup className='mt-2'>
-                            {dummyAssigne.map((item) => (
+                            {spaceData?.members.map((item) => (
                               <PopoverClose
-                                key={item.value}
+                                key={item.id}
                                 className='flex flex-col w-full'
                               >
                                 <CommandItem
                                   className='w-full'
-                                  value={item.value}
+                                  value={item.id}
                                   onSelect={() => {
                                     const updatedValue = commentData
-                                      ? `${commentData} @${item.label}`
-                                      : `@${item.label}`;
+                                      ? `${commentData} @${item.name}`
+                                      : `@${item.name}`;
                                     setValue("comment", updatedValue, {
                                       shouldValidate: true,
                                     });
                                     setPopoverOpen(false);
                                   }}
                                 >
-                                  {item.label}
+                                  {item.name}
                                 </CommandItem>
                               </PopoverClose>
                             ))}
@@ -267,7 +264,7 @@ export function CommentPopover({ commnetsData }: any) {
 
                           <CommandSeparator />
                           <CommandGroup className='mt-2'>
-                            {dummyTaskList.map((item) => (
+                            {spaceData?.tasks?.map((item) => (
                               <PopoverClose
                                 key={item.id}
                                 className='w-full flex flex-col'
@@ -278,15 +275,15 @@ export function CommentPopover({ commnetsData }: any) {
                                   className='w-full'
                                   onSelect={() => {
                                     const updatedValue = commentData
-                                      ? `${commentData} @${item.name}`
-                                      : `@${item.name}`;
+                                      ? `${commentData} @${item.title}`
+                                      : `@${item.title}`;
                                     setValue("comment", updatedValue, {
                                       shouldValidate: true,
                                     });
                                     setPopoverOpen(false);
                                   }}
                                 >
-                                  {item.name}
+                                  {item.title}
                                 </CommandItem>
                               </PopoverClose>
                             ))}

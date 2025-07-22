@@ -12,25 +12,22 @@ import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
 import { useGetSpaceById } from "@/api/space.query";
 import { getUserOptions } from "../../_components/add-task-dialog";
+import { Task } from "@/types";
 
 export const cellOfRows = (
   key: any,
   form: UseFormReturn<any>,
-  data: any,
+  data: Task,
   mutateField: (key: any) => void
-
-  // setTaskList: (list: any) => void
 ) => ({
   assignee: <AssigneeCell key={key} form={form} mutateField={mutateField} />,
   dueDate: (
     <TableCell key={key}>
-      <form
-      // onSubmit={form.handleSubmit(() => mutateField("dueDate"))}
-      >
+      <form>
         <DatePicker
           formController={form.control}
           name='dueDate'
-          onBlur={() => form.handleSubmit(() => mutateField("dueDate"))()}
+          onBlur={() => mutateField("dueDate")}
         />
       </form>
     </TableCell>
@@ -44,7 +41,7 @@ export const cellOfRows = (
           options={priorityOptions}
           icon={<Flag />}
           className={cn("truncate")}
-          onBlur={() => form.handleSubmit(() => mutateField("priority"))()}
+          onBlur={() => mutateField("priority")}
         />
       </form>
     </TableCell>
@@ -57,7 +54,7 @@ export const cellOfRows = (
           name='status'
           options={statusOptions}
           className={cn("truncate")}
-          onBlur={() => form.handleSubmit(() => mutateField("status"))()}
+          onBlur={() => mutateField("status")}
         />
       </form>
     </TableCell>
@@ -71,11 +68,11 @@ export const cellOfRows = (
             variant='ghost'
           >
             <MessageCircle className='size-4  text-muted-foreground' />
-            {data?.comments?.length ? data?.comments?.length : ""}
+            {data?.Comments?.length ? data?.Comments?.length : ""}
           </Button>
         </PopoverTrigger>
 
-        <CommentPopover commnetsData={data.comments} />
+        <CommentPopover taskData={data} />
       </Popover>
     </TableCell>
   ),
@@ -102,7 +99,7 @@ const AssigneeCell = ({
           options={getUserOptions(data?.members || [])}
           icon={<User />}
           className=' truncate'
-          onBlur={() => form.handleSubmit(() => mutateField("assignees"))()}
+          onBlur={() => mutateField("assignees")}
         />
       </form>
     </TableCell>

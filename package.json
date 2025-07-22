@@ -33,6 +33,7 @@
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
     "input-otp": "^1.4.2",
+    "lodash.isequal": "^4.5.0",
     "lucide-react": "^0.506.0",
     "motion": "^12.10.5",
     "next": "^15.2.4",
