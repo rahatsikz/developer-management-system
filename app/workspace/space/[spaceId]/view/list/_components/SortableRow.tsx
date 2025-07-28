@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Check, ChevronRight, Edit, GripIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { statusOptions } from "@/data";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { Form } from "@/components/ui/form";
@@ -13,7 +13,7 @@ import { AddSubTaskRow } from "./AddTaskRow";
 import { useColumnStore } from "@/store";
 import { cellOfRows } from "./AllListCell";
 import { getUserAcronym } from "@/lib/acronym";
-import { useUpdateTask } from "@/api/task.query";
+import { useUpdateSubtask, useUpdateTask } from "@/api/task.query";
 import {
   QueryClient,
   UseMutateFunction,
@@ -99,7 +99,7 @@ export function SortbaleRow({
     });
   }, [data, form]);
 
-  const { mutate, isPending } = useUpdateTask(data.id);
+  const { mutate } = useUpdateTask(data.id);
 
   useEffect(() => {
     if (subTasksOpen.open && isDragging) {
@@ -138,7 +138,6 @@ export function SortbaleRow({
 
   const queryClient = useQueryClient();
   const mutateField = useMutateField(mutate, form, queryClient);
-
   return (
     <>
       <TableRow
@@ -208,7 +207,7 @@ export function SortbaleRow({
                     : "flex items-center justify-between w-full"
                 )}
               >
-                <p className='line-clamp-1'>{isPending ? null : data.title}</p>
+                <p className='line-clamp-1'>{data.title}</p>
                 <Button
                   size={"icon"}
                   variant={"ghost"}
@@ -284,22 +283,25 @@ function SubtaskRow({
 }) {
   const columnArr = useColumnStore((state) => state.ColumnArr);
 
+  const { mutate } = useUpdateSubtask(data.id);
+  const queryClient = useQueryClient();
+
   const form = useForm({
     defaultValues: {
-      name: data.name,
-      assignee: [
-        {
-          value: data.assignee.value,
-          label: data.assignee.label,
-          acronym: data.assignee.acronym,
-          id: data.assignee.id,
-        },
-      ],
+      title: data.title,
+      assignees: data.assignees.map((assignee: any) => ({
+        value: assignee.id,
+        label: assignee.name,
+        id: assignee.id,
+        acronym: getUserAcronym(assignee),
+      })),
       status: data.status || statusOptions[0].value,
       priority: data.priority,
       dueDate: data.dueDate,
     },
   });
+
+  const mutateField = useMutateField(mutate, form, queryClient);
 
   // const { watch } = form;
 
@@ -387,7 +389,7 @@ function SubtaskRow({
                   : "flex items-center justify-between w-full"
               )}
             >
-              <p className='line-clamp-1'>{data?.name}</p>
+              <p className='line-clamp-1'>{data?.title}</p>
               <Button
                 size={"icon"}
                 variant={"ghost"}
@@ -401,26 +403,7 @@ function SubtaskRow({
             </div>
             <form
               onSubmit={form.handleSubmit(() => {
-                // console.log(form.getValues().name);
-                // setTaskList((prev: any) =>
-                //   prev.map((task: any) => {
-                //     if (task.id === mainRowId) {
-                //       return {
-                //         ...task,
-                //         subTasks: (task.subTasks || []).map((subTask: any) => {
-                //           if (subTask.id === data.id) {
-                //             return {
-                //               ...subTask,
-                //               name: form.getValues().name,
-                //             };
-                //           }
-                //           return subTask;
-                //         }),
-                //       };
-                //     }
-                //     return task;
-                //   })
-                // );
+                mutateField("title");
                 setIsNameEditing(false);
               })}
               className={cn(
@@ -430,7 +413,7 @@ function SubtaskRow({
               )}
             >
               <Input
-                name='name'
+                name='title'
                 formControl={form.control}
                 ref={inputRef}
                 type='text'
@@ -448,7 +431,7 @@ function SubtaskRow({
 
         {columnArr.map(
           (item: any) =>
-            cellOfRows(item, form, data, () => {})[
+            cellOfRows(item, form, data, mutateField)[
               item as keyof typeof cellOfRows
             ]
         )}

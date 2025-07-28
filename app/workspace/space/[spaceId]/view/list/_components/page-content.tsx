@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { statusOptions } from "@/data";
 import FilterBar from "./FilterBar";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ export default function ListPage() {
   const { spaceId } = useParams();
 
   const { data: tasks, isFetching } = useGetTasksBySpaceId(spaceId as string);
+  const [isAddingTask, setIsAddingTask] = useState<string | null>(null);
 
   const groupedTaskList =
     (tasks &&
@@ -43,7 +44,12 @@ export default function ListPage() {
               <h1 className={cn("max-lg:ml-2", list.length ? "mb-3" : "")}>
                 {task.label}
               </h1>
-              <ListSection taskList={list} />
+              <ListSection
+                taskList={list}
+                groupBy={task.value}
+                isAddingTask={isAddingTask}
+                setIsAddingTask={setIsAddingTask}
+              />
             </div>
           );
         })}

@@ -19,13 +19,19 @@ import { useTaskReorder } from "@/api/task.query";
 import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 
-export default function ListSection({ taskList }: { taskList: Task[] }) {
+export default function ListSection({
+  taskList,
+  groupBy,
+  isAddingTask,
+  setIsAddingTask,
+}: {
+  taskList: Task[];
+  groupBy: string;
+  isAddingTask: string | null;
+  setIsAddingTask: (val: string | null) => void;
+}) {
   const [isDragging, setIsDragging] = useState(false);
   const columnArr = useColumnStore((state) => state.ColumnArr);
-
-  // console.log({ taskList });
-
-  // const [tasks, setTasks] = useState<Task[]>(taskList || []);
 
   // for hydration error fix on dnd
   const [isClient, setIsClient] = useState(false);
@@ -50,8 +56,6 @@ export default function ListSection({ taskList }: { taskList: Task[] }) {
   const orderedTasks = taskOrder
     .map((id) => taskList.find((task) => task.id === id))
     .filter(Boolean) as Task[]; // filter out undefined if any
-
-  console.log(orderedTasks, "orderedTasks");
 
   // const handleDragEnd = (event: any) => {
   //   const { active, over } = event;
@@ -151,7 +155,11 @@ export default function ListSection({ taskList }: { taskList: Task[] }) {
             {orderedTasks.map((item: Task) => (
               <SortbaleRow key={item.id} data={item} isDragging={isDragging} />
             ))}
-            <AddTaskRow />
+            <AddTaskRow
+              groupBy={groupBy}
+              isAddingTask={isAddingTask}
+              setIsAddingTask={setIsAddingTask}
+            />
           </TableBody>
         </Table>
         {/* card */}

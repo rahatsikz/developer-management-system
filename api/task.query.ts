@@ -88,3 +88,47 @@ export const useTaskReorder = () => {
     },
   });
 };
+
+export const useCreateSubtask = (taskId: string) => {
+  return useMutation({
+    mutationFn: async (payload: {
+      title: string;
+      assigneeIds?: string | string[] | null;
+      priority?: string;
+      dueDate?: string;
+      status?: string;
+    }) => {
+      try {
+        const response = await axiosInstance.post(
+          `/task/${taskId}/subtask`,
+          payload
+        );
+        return response.data.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+  });
+};
+
+export const useUpdateSubtask = (id: string) => {
+  return useMutation({
+    mutationFn: async (payload: {
+      title?: string;
+      assigneeIds?: string | string[] | null;
+      priority?: string;
+      dueDate?: string;
+      status?: string;
+    }) => {
+      try {
+        const response = await axiosInstance.put(
+          `/task/subtask/${id}`,
+          payload
+        );
+        return response.data.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+  });
+};

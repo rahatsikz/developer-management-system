@@ -26,8 +26,6 @@ import { useUpdateTask } from "@/api/task.query";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function ListCard({ item }: { item: Task }) {
-  console.log(item, "items");
-
   const form = useForm({
     defaultValues: {
       title: item.title,
