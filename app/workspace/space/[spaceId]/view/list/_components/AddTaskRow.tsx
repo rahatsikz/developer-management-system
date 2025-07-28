@@ -10,12 +10,12 @@ import { ComboBox } from "@/components/ui/ComboBox";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { useColumnStore } from "@/store";
 import { useCreateSubtask, useCreateTask } from "@/api/task.query";
 import { useParams } from "next/navigation";
 import { useGetSpaceById } from "@/api/space.query";
 import { getUserOptions } from "../../_components/add-task-dialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { useColumnStore } from "@/store/use-column-store";
 
 export default function AddTaskRow({
   groupBy,

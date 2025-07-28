@@ -1,12 +1,16 @@
 "use client";
 import React, { useState } from "react";
-import { statusOptions } from "@/data";
+import { priorityOptions, statusOptions } from "@/data";
 import FilterBar from "./FilterBar";
 import { cn } from "@/lib/utils";
 import ListSection from "./ListSection";
 import { useParams } from "next/navigation";
 import { useGetTasksBySpaceId } from "@/api/task.query";
 import { useDelayedSpinner } from "@/hooks/use-delayed-spinner";
+import { Task } from "@/types";
+import { useAuthStore } from "@/store/use-auth-store";
+
+type GroupKey = "status" | "priority" | "assignee";
 
 export default function ListPage() {
   const { spaceId } = useParams();
@@ -14,45 +18,54 @@ export default function ListPage() {
   const { data: tasks, isFetching } = useGetTasksBySpaceId(spaceId as string);
   const [isAddingTask, setIsAddingTask] = useState<string | null>(null);
 
-  const groupedTaskList =
-    (tasks &&
-      tasks.reduce((acc: any, task: any) => {
-        const status = task.status;
-        if (!acc[status]) {
-          acc[status] = [];
-        }
-        acc[status].push(task);
-        return acc;
-      }, {})) ||
-    {};
-
   const showSpinner = useDelayedSpinner(isFetching, !!tasks);
+
+  const [group, setGroup] = useState<string>("status");
+  const [meMode, setMeMode] = useState(false);
+
+  const { user } = useAuthStore((state) => state);
 
   if (showSpinner) {
     return <TableSkeleton />;
   }
 
+  const myTasks = user
+    ? tasks?.filter((task) => task.assignees.some((u) => u.id === user.id))
+    : [];
+
   return (
     <section>
-      <FilterBar />
-      {/* <ListSection taskList={taskList} setTaskList={setTaskList} /> */}
+      <FilterBar
+        groupChangeHandler={setGroup}
+        meMode={meMode}
+        setMeMode={setMeMode}
+      />
       <div className='space-y-7 mt-4 lg:mt-8'>
-        {statusOptions.map((task) => {
-          const list = groupedTaskList[task.value] || [];
-          return (
-            <div key={task.value}>
-              <h1 className={cn("max-lg:ml-2", list.length ? "mb-3" : "")}>
-                {task.label}
-              </h1>
-              <ListSection
-                taskList={list}
-                groupBy={task.value}
-                isAddingTask={isAddingTask}
-                setIsAddingTask={setIsAddingTask}
-              />
-            </div>
-          );
-        })}
+        {Object.entries(
+          groupedTasks({
+            tasks: meMode ? myTasks : tasks,
+            group,
+          })
+        ).map(([key, list]) => (
+          <div key={key}>
+            <h1
+              className={cn(
+                "max-lg:ml-2 capitalize",
+                list.length ? "mb-3" : ""
+              )}
+            >
+              {key === "unassigned"
+                ? "Unassigned"
+                : key.toLowerCase().split("_").join(" ")}
+            </h1>
+            <ListSection
+              taskList={list}
+              groupBy={key}
+              isAddingTask={isAddingTask}
+              setIsAddingTask={setIsAddingTask}
+            />
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -126,4 +139,82 @@ function TableSkeleton() {
       </tbody>
     </table>
   );
+}
+
+function groupedTasks({
+  tasks,
+  group,
+}: {
+  tasks: Task[] | undefined;
+  group: string;
+}) {
+  const groupedByStatus = groupBy(
+    tasks ? tasks : [],
+    "status",
+    statusOptions.map((item) => item.value)
+  );
+  const groupedByPriority = groupBy(
+    tasks ? tasks : [],
+    "priority",
+    priorityOptions.map((item) => item.value)
+  );
+  const groupedByAssignee = groupBy(tasks ? tasks : [], "assignee");
+
+  let groupedTasks;
+
+  switch (group) {
+    case "status":
+      groupedTasks = groupedByStatus;
+      break;
+    case "priority":
+      groupedTasks = groupedByPriority;
+      break;
+    case "assignee":
+      groupedTasks = groupedByAssignee;
+      break;
+    case "none":
+      groupedTasks = { all: tasks ?? [] };
+      break;
+
+    default:
+      groupedTasks = {};
+  }
+
+  return groupedTasks;
+}
+
+function groupBy(
+  tasks: Task[],
+  groupBy: GroupKey,
+  possibleKeys: string[] = []
+): Record<string, Task[]> {
+  const grouped: Record<string, Task[]> = {};
+
+  if (groupBy !== "assignee") {
+    for (const key of possibleKeys) {
+      grouped[key] = [];
+    }
+  }
+
+  for (const task of tasks) {
+    if (groupBy === "assignee") {
+      if (!task.assignees || task.assignees.length === 0) {
+        // No assignees
+        grouped["unassigned"] ??= [];
+        grouped["unassigned"].push(task);
+      } else {
+        for (const user of task.assignees) {
+          const key = user.name || user.email || "unknown"; // Pick your identifier
+          grouped[key] ??= [];
+          grouped[key].push(task);
+        }
+      }
+    } else {
+      const key = task[groupBy] ?? "unknown";
+      grouped[key] ??= [];
+      grouped[key].push(task);
+    }
+  }
+
+  return grouped;
 }

@@ -42,7 +42,7 @@ export const priorityOptions = [
 
 export const statusOptions = [
   {
-    value: "TODO",
+    value: "TO_DO",
     label: "To Do",
     icon: <CircleDot style={{ strokeWidth: 3, stroke: "slategray" }} />,
   },

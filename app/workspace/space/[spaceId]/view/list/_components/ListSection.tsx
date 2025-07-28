@@ -13,11 +13,11 @@ import {
 import { SortbaleRow } from "./SortableRow";
 import AddTaskRow from "./AddTaskRow";
 import ListCard, { AddListCard } from "./ListCard";
-import { useColumnStore } from "@/store";
 import { Task } from "@/types";
 import { useTaskReorder } from "@/api/task.query";
 import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { useColumnStore } from "@/store/use-column-store";
 
 export default function ListSection({
   taskList,
@@ -31,7 +31,7 @@ export default function ListSection({
   setIsAddingTask: (val: string | null) => void;
 }) {
   const [isDragging, setIsDragging] = useState(false);
-  const columnArr = useColumnStore((state) => state.ColumnArr);
+  const { ColumnArr } = useColumnStore((state) => state);
 
   // for hydration error fix on dnd
   const [isClient, setIsClient] = useState(false);
@@ -138,15 +138,15 @@ export default function ListSection({
         <Table className='hidden lg:table'>
           <TableHeader>
             <TableRow className='group'>
-              {columnArr.map((item, idx) => (
+              {ColumnArr.filter((item) => item.checked).map((item, idx) => (
                 <TableHead
                   key={idx}
                   className={cn(
                     "capitalize",
-                    item === "name" ? "sticky left-0 bg-background" : ""
+                    item.name === "name" ? "sticky left-0 bg-background" : ""
                   )}
                 >
-                  {headers[item as keyof typeof headers]}
+                  {headers[item.name as keyof typeof headers] ?? item.name}
                 </TableHead>
               ))}
             </TableRow>

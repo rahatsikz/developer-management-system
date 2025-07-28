@@ -10,7 +10,6 @@ import { useForm, UseFormReturn } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { AddSubTaskRow } from "./AddTaskRow";
-import { useColumnStore } from "@/store";
 import { cellOfRows } from "./AllListCell";
 import { getUserAcronym } from "@/lib/acronym";
 import { useUpdateSubtask, useUpdateTask } from "@/api/task.query";
@@ -20,6 +19,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { Task } from "@/types";
+import { useColumnStore } from "@/store/use-column-store";
 
 export function useMutateField<FormValues>(
   mutate: UseMutateFunction<any, unknown, Partial<FormValues>, unknown>,
@@ -248,12 +248,14 @@ export function SortbaleRow({
             </div>
           </TableCell>
 
-          {columnArr.map(
-            (item: any) =>
-              cellOfRows(item, form, data, mutateField)[
-                item as keyof typeof cellOfRows
-              ]
-          )}
+          {columnArr
+            .filter((item) => item.checked)
+            .map(
+              (item) =>
+                cellOfRows(item.name, form, data, mutateField)[
+                  item.name as keyof typeof cellOfRows
+                ]
+            )}
         </Form>
       </TableRow>
       {data?.SubTasks?.length > 0 &&
@@ -302,46 +304,6 @@ function SubtaskRow({
   });
 
   const mutateField = useMutateField(mutate, form, queryClient);
-
-  // const { watch } = form;
-
-  // Watching for changes to the `assigne` field
-  // const [assignee, status, priority, dueDate] = [
-  //   watch("assignee"),
-  //   watch("status"),
-  //   watch("priority"),
-  //   watch("dueDate"),
-  // ];
-  // useEffect(() => {
-  //   // Create a mapping of the watched fields to their corresponding keys in the task
-  //   const updates = {
-  //     assignee: assignee,
-  //     status: status,
-  //     priority: priority,
-  //     dueDate: dueDate && formatISO(dueDate),
-  //   };
-
-  //   Object.entries(updates).forEach(([key, value]) => {
-  //     if (value !== undefined) {
-  //       setTaskList((prev: any) =>
-  //         prev.map((task: any) => {
-  //           if (task.id === mainRowId) {
-  //             return {
-  //               ...task,
-  //               subTasks: (task.subTasks || []).map((subTask: any) => {
-  //                 if (subTask.id === data.id) {
-  //                   return { ...subTask, [key]: value };
-  //                 }
-  //                 return subTask;
-  //               }),
-  //             };
-  //           }
-  //           return task;
-  //         })
-  //       );
-  //     }
-  //   });
-  // }, [assignee, mainRowId, priority, setTaskList, status, dueDate, data.id]);
 
   // to edit the task name
   const [isNameEditing, setIsNameEditing] = useState(false);
@@ -429,12 +391,14 @@ function SubtaskRow({
           </div>
         </TableCell>
 
-        {columnArr.map(
-          (item: any) =>
-            cellOfRows(item, form, data, mutateField)[
-              item as keyof typeof cellOfRows
-            ]
-        )}
+        {columnArr
+          .filter((item) => item.checked)
+          .map(
+            (item) =>
+              cellOfRows(item.name, form, data, mutateField)[
+                item.name as keyof typeof cellOfRows
+              ]
+          )}
       </Form>
     </TableRow>
   );

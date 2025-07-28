@@ -60,7 +60,10 @@ const Switch = React.forwardRef<
               ref={ref}
               className={cn(className)}
               checked={field.value}
-              onCheckedChange={field.onChange}
+              onCheckedChange={(value) => {
+                field.onChange(value);
+                props.onCheckedChange?.(value);
+              }}
             />
           </FormControl>
           <FormMessage />

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { Grid2X2, GripVertical, Layers } from "lucide-react";
+import { Grid2X2, GripVertical, Layers, User } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import { dummyFields, groupOptions } from "@/data";
+import { groupOptions } from "@/data";
 import {
   Sheet,
   SheetContent,
@@ -21,13 +21,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
-import { DndContext } from "@dnd-kit/core";
+import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useColumnStore } from "@/store";
 import { AddTaskDialog } from "../../_components/add-task-dialog";
+import { useColumnStore } from "@/store/use-column-store";
 
-const FilterBar = () => {
+const FilterBar = ({
+  groupChangeHandler,
+  meMode,
+  setMeMode,
+}: {
+  groupChangeHandler: (group: string) => void;
+  meMode: boolean;
+  setMeMode: (meMode: boolean) => void;
+}) => {
   const form = useForm({
     defaultValues: {
       group: groupOptions[2].value,
@@ -35,43 +43,43 @@ const FilterBar = () => {
   });
 
   const [isDragging, setIsDragging] = useState(false);
-  const [columnFields, setColumnFields] = useState(dummyFields);
-  const addToColumnArray = useColumnStore((state) => state.AddToColumnArray);
 
-  const handleDragEnd = (event: any) => {
+  const { ColumnArr, setColumns } = useColumnStore((state) => state);
+
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setIsDragging(false);
 
     if (!active?.id || !over?.id || active.id === over.id) return;
 
-    const activeItem = columnFields.find((item: any) => item.id === active.id);
-    const overItem = columnFields.find((item: any) => item.id === over.id);
-
-    if (activeItem && overItem) {
-      setColumnFields((prev: any) => {
-        // Find the positions of active and over items in the full task list
-        const oldIndex = prev.findIndex(
-          (item: any) => item.id === activeItem.id
-        );
-        const newIndex = prev.findIndex((item: any) => item.id === overItem.id);
-
-        if (oldIndex === -1 || newIndex === -1) return prev;
-
-        // Reorder the full task list
-        const updatedList = [...prev];
-        const [movedItem] = updatedList.splice(oldIndex, 1);
-        updatedList.splice(newIndex, 0, movedItem);
-
-        return updatedList;
-      });
-    }
-  };
-
-  useEffect(() => {
-    addToColumnArray(
-      columnFields.filter((item) => item.checked).map((item: any) => item.name)
+    const visibleColumns = ColumnArr.filter(
+      (c) => c.checked && c.name !== "id"
     );
-  }, [columnFields, addToColumnArray]);
+
+    const oldIndex = visibleColumns.findIndex((c) => c.id === active.id);
+    const newIndex = visibleColumns.findIndex((c) => c.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reorderedVisible = [...visibleColumns];
+    const [moved] = reorderedVisible.splice(oldIndex, 1);
+    reorderedVisible.splice(newIndex, 0, moved);
+
+    // Now apply that order to the full ColumnArr
+    const reorderedAll = [...ColumnArr];
+    const visibleIds = reorderedVisible.map((col) => col.id);
+
+    // making sure visible columns in the new order with unchecked columns position
+    let newIndexInAll = 0;
+    for (let i = 0; i < reorderedAll.length; i++) {
+      if (visibleIds.includes(reorderedAll[i].id)) {
+        reorderedAll[i] = reorderedVisible[newIndexInAll];
+        newIndexInAll++;
+      }
+    }
+
+    setColumns(reorderedAll);
+  };
 
   const handleDragStart = () => {
     setIsDragging(true);
@@ -87,13 +95,16 @@ const FilterBar = () => {
             render={({ field }) => (
               <FormItem className='mt-2'>
                 <Select
-                  onValueChange={field.onChange}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    groupChangeHandler(value);
+                  }}
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger className='rounded-full !bg-background text-sm !text-muted-foreground [&>svg]:hidden px-4'>
-                      <div className='flex items-center gap-1'>
-                        <Layers className='mr-2 h-4 w-4 text-muted-foreground' />
+                    <SelectTrigger className='rounded-full !bg-background text-[13px] font-medium !text-muted-foreground [&>svg]:hidden px-4  hover:border-muted-foreground'>
+                      <div className='flex items-center gap-2'>
+                        <Layers className='size-3.5! text-muted-foreground' />
                         <SelectValue />
                       </div>
                     </SelectTrigger>
@@ -115,11 +126,11 @@ const FilterBar = () => {
               <Button
                 variant='outline'
                 className={cn(
-                  "justify-start text-muted-foreground shadow-none hover:bg-background hover:border-muted-foreground bg-transparent font-normal rounded-full",
+                  "justify-start text-[13px] font-medium text-muted-foreground shadow-none hover:bg-background hover:border-muted-foreground bg-transparent  rounded-full",
                   "data-[state=open]:ring-2 data-[state=open]:ring-primary data-[state=open]:bg-muted data-[state=open]:text-foreground"
                 )}
               >
-                <Grid2X2 className='size-4' />
+                <Grid2X2 className='size-3.5!' />
                 Columns
               </Button>
             </SheetTrigger>
@@ -130,32 +141,33 @@ const FilterBar = () => {
               </SheetHeader>
               <div className='mt-2'>
                 <h3 className='text-muted-foreground text-sm mb-3 '>Shown</h3>
-                {columnFields
-                  .filter((item) => item.label === "Name")
-                  .map((field) => (
+                {ColumnArr.filter((item) => item.label === "Name").map(
+                  (field) => (
                     <IndividualField
                       key={field.id}
                       {...field}
-                      updateColumn={setColumnFields}
                       dragging={isDragging}
                     />
-                  ))}
+                  )
+                )}
                 <DndContext
                   onDragEnd={handleDragEnd}
                   onDragStart={handleDragStart}
                 >
-                  <SortableContext items={columnFields.map((item) => item.id)}>
+                  <SortableContext items={ColumnArr.map((item) => item.id)}>
                     <div className='space-y-3 mt-3'>
-                      {columnFields
-                        .filter((item) => item.checked && item.label !== "Name")
-                        .map((field) => (
-                          <IndividualField
-                            key={field.id}
-                            {...field}
-                            updateColumn={setColumnFields}
-                            dragging={isDragging}
-                          />
-                        ))}
+                      {ColumnArr.filter(
+                        (item) =>
+                          item.checked &&
+                          item.label !== "Name" &&
+                          item.label !== "id"
+                      ).map((field) => (
+                        <IndividualField
+                          key={field.id}
+                          {...field}
+                          dragging={isDragging}
+                        />
+                      ))}
                     </div>
                   </SortableContext>
                 </DndContext>
@@ -163,20 +175,30 @@ const FilterBar = () => {
                   Hidden
                 </h3>
                 <div className='space-y-3'>
-                  {columnFields
-                    .filter((item) => !item.checked)
-                    .map((field) => (
-                      <IndividualField
-                        key={field.id}
-                        {...field}
-                        updateColumn={setColumnFields}
-                        dragging={isDragging}
-                      />
-                    ))}
+                  {ColumnArr.filter((item) => !item.checked).map((field) => (
+                    <IndividualField
+                      key={field.id}
+                      {...field}
+                      dragging={isDragging}
+                    />
+                  ))}
                 </div>
               </div>
             </SheetContent>
           </Sheet>
+
+          <Button
+            type='button'
+            onClick={() => setMeMode(!meMode)}
+            className={cn(
+              "rounded-full border text-[13px] px-6  bg-background text-muted-foreground hover:bg-background  hover:border-muted-foreground",
+              meMode &&
+                "bg-primary text-background hover:bg-primary border-primary"
+            )}
+          >
+            <User className='size-3.5!' />
+            <span>Me Mode</span>
+          </Button>
         </form>
       </Form>
       <AddTaskDialog />
@@ -191,14 +213,12 @@ function IndividualField({
   label,
   checked,
   id,
-  updateColumn,
   dragging,
 }: {
   id: string;
   name: string;
   label: string;
   checked: boolean;
-  updateColumn: (columns: any) => void;
   dragging: boolean;
 }) {
   const form = useForm({
@@ -207,17 +227,11 @@ function IndividualField({
     },
   });
 
-  const { watch } = form;
+  // const { watch } = form;
 
-  const checkedValue = watch(name);
+  // const checkedValue = watch(name);
 
-  useEffect(() => {
-    updateColumn((prev: any) =>
-      prev.map((item: any) =>
-        item.id === id ? { ...item, checked: checkedValue } : item
-      )
-    );
-  }, [checkedValue, id, updateColumn]);
+  const { toggleColumn } = useColumnStore((state) => state);
 
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: id });
@@ -266,6 +280,9 @@ function IndividualField({
             formControl={form.control}
             style={{ marginLeft: "auto" }}
             disabled={label === "Name"}
+            onCheckedChange={() => {
+              toggleColumn(name);
+            }}
           />
         </form>
       </Form>
