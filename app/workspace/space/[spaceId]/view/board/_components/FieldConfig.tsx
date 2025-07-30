@@ -1,12 +1,12 @@
-import { dummyAssigne, priorityOptions, statusOptions } from "@/data";
+import { priorityOptions, statusOptions } from "@/data";
 import { Flag, User } from "lucide-react";
 
 export const formConfig = [
   {
     inputType: "multiselect",
-    name: "assignee",
+    name: "assignees",
     label: "Assignee",
-    options: dummyAssigne,
+    // options: dummyAssigne,
     icon: <User />,
     classNames: "px-2.5 py-2",
   },

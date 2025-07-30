@@ -58,6 +58,22 @@ export const useUpdateTask = (id: string) => {
   });
 };
 
+// update task
+export const useUpdateTaskStatus = () => {
+  return useMutation({
+    mutationFn: async (payload: { status?: string; taskId: string }) => {
+      try {
+        const response = await axiosInstance.put(`/task/${payload.taskId}`, {
+          status: payload.status,
+        });
+        return response.data.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+  });
+};
+
 // create comment
 export const useAddComment = (taskId: string) => {
   return useMutation({

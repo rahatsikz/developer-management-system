@@ -15,7 +15,11 @@ type GroupKey = "status" | "priority" | "assignee";
 export default function ListPage() {
   const { spaceId } = useParams();
 
-  const { data: tasks, isFetching } = useGetTasksBySpaceId(spaceId as string);
+  const {
+    data: tasks,
+    isFetching,
+    isLoading,
+  } = useGetTasksBySpaceId(spaceId as string);
   const [isAddingTask, setIsAddingTask] = useState<string | null>(null);
 
   const showSpinner = useDelayedSpinner(isFetching, !!tasks);
@@ -25,7 +29,7 @@ export default function ListPage() {
 
   const { user } = useAuthStore((state) => state);
 
-  if (showSpinner) {
+  if (showSpinner || isLoading) {
     return <TableSkeleton />;
   }
 
@@ -141,7 +145,7 @@ function TableSkeleton() {
   );
 }
 
-function groupedTasks({
+export function groupedTasks({
   tasks,
   group,
 }: {

@@ -1,18 +1,24 @@
 import { ComboBox } from "@/components/ui/ComboBox";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { MultiSelect } from "@/components/ui/MultiSelect";
+import { getUserOptions } from "../../_components/add-task-dialog";
+import { useGetSpaceById } from "@/api/space.query";
+import { useParams } from "next/navigation";
 
-export function renderField(item: any, formControl: any, taskId: string) {
+export function renderField(
+  item: any,
+  formControl: any,
+  taskId: string,
+  mutateField: (key: any) => void
+) {
   switch (item.inputType) {
     case "multiselect":
       return (
-        <MultiSelect
-          id={item.name + taskId}
+        <AssigneeCell
           formControl={formControl}
-          name={item.name}
-          options={item.options}
-          icon={item.icon}
-          className={item.classNames}
+          item={item}
+          taskId={taskId}
+          mutateField={mutateField}
         />
       );
     case "combobox":
@@ -24,6 +30,7 @@ export function renderField(item: any, formControl: any, taskId: string) {
           options={item.options}
           icon={item.icon}
           className={item.classNames}
+          onBlur={() => mutateField(item.name)}
         />
       );
     case "datepicker":
@@ -33,6 +40,7 @@ export function renderField(item: any, formControl: any, taskId: string) {
           formController={formControl}
           name={item.name}
           className={item.classNames}
+          onBlur={() => mutateField(item.name)}
         />
       );
 
@@ -40,3 +48,32 @@ export function renderField(item: any, formControl: any, taskId: string) {
       return null;
   }
 }
+
+const AssigneeCell = ({
+  formControl,
+  item,
+  taskId,
+  mutateField,
+}: {
+  formControl: any;
+  item: any;
+  taskId: string;
+  mutateField: (key: any) => void;
+}) => {
+  const { spaceId } = useParams();
+  const { data, isLoading } = useGetSpaceById(spaceId as string);
+  if (isLoading) {
+    return null;
+  }
+  return (
+    <MultiSelect
+      formControl={formControl}
+      name='assignees'
+      options={getUserOptions(data?.members || [])}
+      id={item.name + taskId}
+      icon={item.icon}
+      className={item.classNames}
+      onBlur={() => mutateField(item.name)}
+    />
+  );
+};

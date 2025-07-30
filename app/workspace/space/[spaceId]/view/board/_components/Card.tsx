@@ -7,6 +7,11 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { formConfig } from "./FieldConfig";
 import { renderField } from "./RenderField";
+import { getUserAcronym } from "@/lib/acronym";
+import { useUpdateTask } from "@/api/task.query";
+import { Task } from "@/types";
+import { useQueryClient } from "@tanstack/react-query";
+import { useMutateField } from "../../list/_components/SortableRow";
 
 const Card = ({ task }: { task: any }) => {
   const {
@@ -53,7 +58,7 @@ const Card = ({ task }: { task: any }) => {
             "size-4"
           )}
         />
-        <p className='text-sm font-medium'>{task.name}</p>
+        <p className='text-sm font-medium'>{task.title}</p>
       </div>
       <CardForm task={task} onFocus={handleFocus} onBlur={handleBlur} />
     </div>
@@ -67,26 +72,29 @@ export function CardForm({
   onFocus,
   onBlur,
 }: {
-  task: any;
+  task: Task;
   onFocus?: any;
   onBlur?: any;
 }) {
   const form = useForm({
     defaultValues: {
-      name: task.name,
-      assignee: [
-        {
-          value: task?.assignee?.value,
-          label: task?.assignee?.label,
-          acronym: task?.assignee?.acronym,
-          id: task?.assignee?.id,
-        },
-      ],
+      name: task.title,
+      assignees: task.assignees.map((assignee: any) => ({
+        value: assignee.id,
+        label: assignee.name,
+        id: assignee.id,
+        acronym: getUserAcronym(assignee),
+      })),
       status: task.status,
       priority: task.priority,
       dueDate: task.dueDate,
     },
   });
+
+  const { mutate } = useUpdateTask(task.id);
+  const queryClient = useQueryClient();
+
+  const mutateField = useMutateField(mutate, form, queryClient);
 
   return (
     <Form {...form}>
@@ -99,7 +107,7 @@ export function CardForm({
             >
               {item.label}
             </Label>
-            {renderField(item, form.control, task.id)}
+            {renderField(item, form.control, task.id, mutateField)}
           </div>
         ))}
       </form>
