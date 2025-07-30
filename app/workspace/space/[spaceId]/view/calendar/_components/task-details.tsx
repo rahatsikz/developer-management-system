@@ -4,8 +4,13 @@ import { useForm } from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import { formConfig } from "../../board/_components/FieldConfig";
 import { renderField } from "../../board/_components/RenderField";
+import { getUserAcronym } from "@/lib/acronym";
+import { useUpdateTask } from "@/api/task.query";
+import { useQueryClient } from "@tanstack/react-query";
+import { useMutateField } from "../../list/_components/SortableRow";
+import { Task } from "@/types";
 
-const Card = ({ task }: { task: any }) => {
+const Card = ({ task }: { task: Task }) => {
   return (
     <div
       className={cn(
@@ -13,7 +18,7 @@ const Card = ({ task }: { task: any }) => {
       )}
     >
       <div className='flex items-center gap-3'>
-        <p className='text-sm font-medium'>{task.name}</p>
+        <p className='text-sm font-medium'>{task.title}</p>
       </div>
       <CardForm task={task} />
     </div>
@@ -22,23 +27,26 @@ const Card = ({ task }: { task: any }) => {
 
 export default Card;
 
-export function CardForm({ task }: { task: any }) {
+export function CardForm({ task }: { task: Task }) {
   const form = useForm({
     defaultValues: {
-      name: task.name,
-      assignee: [
-        {
-          value: task?.assignee?.value,
-          label: task?.assignee?.label,
-          acronym: task?.assignee?.acronym,
-          id: task?.assignee?.id,
-        },
-      ],
+      name: task.title,
+      assignees: task.assignees.map((assignee: any) => ({
+        value: assignee.id,
+        label: assignee.name,
+        id: assignee.id,
+        acronym: getUserAcronym(assignee),
+      })),
       status: task.status,
       priority: task.priority,
       dueDate: task.dueDate,
     },
   });
+
+  const { mutate } = useUpdateTask(task.id);
+  const queryClient = useQueryClient();
+
+  const mutateField = useMutateField(mutate, form, queryClient);
 
   return (
     <Form {...form}>
@@ -51,7 +59,7 @@ export function CardForm({ task }: { task: any }) {
             >
               {item.label}
             </Label>
-            {renderField(item, form.control, task.id)}
+            {renderField(item, form.control, task.id, mutateField)}
           </div>
         ))}
       </form>

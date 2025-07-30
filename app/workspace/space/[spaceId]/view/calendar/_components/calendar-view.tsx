@@ -19,8 +19,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-// import { DateDetails } from "./date-details";
-// import type { Booking } from "@/types";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { dummyTaskList } from "@/data";
 import Card from "./task-details";
@@ -31,15 +29,6 @@ export function CalendarView() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const isLargeDevice = useMediaQuery("(min-width: 1024px)");
-
-  // Filter bookings based on search query and type
-  //   const filteredBookings = bookingData.filter((booking) => {
-  //     const matchesSearch =
-  //       searchQuery === "" ||
-  //       booking.property.title.toLowerCase().includes(searchQuery.toLowerCase());
-
-  //     return matchesSearch;
-  //   });
 
   const groupedTaskList = dummyTaskList.reduce((acc: any, task: any) => {
     const date = format(task.dueDate, "yyyy-MM-dd");
@@ -68,21 +57,6 @@ export function CalendarView() {
     setSelectedDate(date);
     setIsSheetOpen(true);
   };
-
-  //   const getBookingsForDate = (date: Date) => {
-  //     return filteredBookings.filter((booking) => {
-  //       const chekcInTime = booking.checkInDate.split("T")[0];
-  //       const checkIn = parseISO(chekcInTime ?? "");
-  //       const checkOut = booking.checkOutDate
-  //         ? parseISO(booking.checkOutDate)
-  //         : checkIn;
-
-  //       return isWithinInterval(date, {
-  //         start: checkIn,
-  //         end: checkOut,
-  //       });
-  //     });
-  //   };
 
   // Generate days for the current month view
   const monthStart = startOfMonth(currentDate);
