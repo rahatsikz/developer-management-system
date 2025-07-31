@@ -86,9 +86,9 @@ const FilterBar = ({
   };
 
   return (
-    <div className='mt-0.5 ml-0.5 flex items-center justify-between'>
+    <div className='mt-0.5 md:ml-0.5 flex  gap-1.5 md:gap-4 items-center max-md:justify-between 2xl:justify-between'>
       <Form {...form}>
-        <form className='flex gap-4 items-center'>
+        <form className='flex gap-1.5 md:gap-4 items-center'>
           <FormField
             control={form.control}
             name='group'
@@ -102,9 +102,9 @@ const FilterBar = ({
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger className='rounded-full !bg-background text-[13px] font-medium !text-muted-foreground [&>svg]:hidden px-4  hover:border-muted-foreground'>
+                    <SelectTrigger className='rounded-full !bg-background text-[11px] md:text-[13px] font-medium !text-muted-foreground [&>svg]:hidden px-4  hover:border-muted-foreground'>
                       <div className='flex items-center gap-2'>
-                        <Layers className='size-3.5! text-muted-foreground' />
+                        <Layers className='size-3! md:size-3.5! text-muted-foreground' />
                         <SelectValue />
                       </div>
                     </SelectTrigger>
@@ -126,11 +126,11 @@ const FilterBar = ({
               <Button
                 variant='outline'
                 className={cn(
-                  "justify-start text-[13px] font-medium text-muted-foreground shadow-none hover:bg-background hover:border-muted-foreground bg-transparent  rounded-full",
+                  "justify-start text-[11px] md:text-[13px] font-medium text-muted-foreground shadow-none hover:bg-background hover:border-muted-foreground bg-transparent  rounded-full",
                   "data-[state=open]:ring-2 data-[state=open]:ring-primary data-[state=open]:bg-muted data-[state=open]:text-foreground"
                 )}
               >
-                <Grid2X2 className='size-3.5!' />
+                <Grid2X2 className='size-3! md:size-3.5!' />
                 Columns
               </Button>
             </SheetTrigger>
@@ -191,12 +191,12 @@ const FilterBar = ({
             type='button'
             onClick={() => setMeMode(!meMode)}
             className={cn(
-              "rounded-full border text-[13px] px-6  bg-background text-muted-foreground hover:bg-background  hover:border-muted-foreground",
+              "rounded-full border text-[11px] md:text-[13px]  bg-background text-muted-foreground hover:bg-background  hover:border-muted-foreground",
               meMode &&
                 "bg-primary text-background hover:bg-primary border-primary"
             )}
           >
-            <User className='size-3.5!' />
+            <User className='size-3! md:size-3.5!' />
             <span>Me Mode</span>
           </Button>
         </form>

@@ -27,6 +27,8 @@ import { priorityOptions } from "@/data";
 import { Input } from "@/components/ui/input";
 import { User } from "@/types";
 import { useCreateTask } from "@/api/task.query";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -93,13 +95,27 @@ export function AddTaskDialog() {
     }
   }
 
+  const isTabDevice = useMediaQuery("(min-width: 768px)");
+  const isLargeDevice = useMediaQuery("(min-width: 1440px)");
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className='mr-1 h-4 w-4' />
-          Add Task
-        </Button>
+        {isTabDevice ? (
+          <Button
+            size={isLargeDevice ? "default" : "sm"}
+            className={cn(isLargeDevice ? "" : "rounded-full")}
+          >
+            <Plus className='h-4 w-4' />
+            <span className={cn(isLargeDevice ? "" : "text-[13px]")}>
+              Add Task
+            </span>
+          </Button>
+        ) : (
+          <Button size={"icon"} className='size-8'>
+            <Plus className='size-4!' />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>
