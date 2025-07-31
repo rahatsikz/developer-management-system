@@ -18,7 +18,7 @@ import {
 import { Form } from "@/components/ui/form";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useGetSpaceById } from "@/api/space.query";
 import { MultiSelect, OptionProps } from "@/components/ui/MultiSelect";
 import { ComboBox } from "@/components/ui/ComboBox";
@@ -98,18 +98,23 @@ export function AddTaskDialog() {
   const isTabDevice = useMediaQuery("(min-width: 768px)");
   const isLargeDevice = useMediaQuery("(min-width: 1440px)");
 
+  const pathname = usePathname();
+  const isBoardRoute = pathname.includes("board");
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {isTabDevice ? (
           <Button
-            size={isLargeDevice ? "default" : "sm"}
-            className={cn(isLargeDevice ? "" : "rounded-full")}
+            size={isLargeDevice ? (isBoardRoute ? "default" : "default") : "sm"}
+            className={cn(
+              isLargeDevice ? "" : "rounded-full",
+              "text-[13px]",
+              isBoardRoute && "rounded-full gap-1.5 px-4 h-[34px]"
+            )}
           >
-            <Plus className='h-4 w-4' />
-            <span className={cn(isLargeDevice ? "" : "text-[13px]")}>
-              Add Task
-            </span>
+            <Plus className='size-3.5!' />
+            <span>Add Task</span>
           </Button>
         ) : (
           <Button size={"icon"} className='size-8'>

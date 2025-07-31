@@ -9,7 +9,9 @@ export default function ProjectBoardLayout({
   return (
     <div className='flex flex-col gap-5 '>
       <ViewTabs />
-      <section className='lg:px-8 px-4 mt-[70px]'>{children}</section>
+      <section className='lg:px-8 px-4 mt-[60px] lg:mt-[64px]'>
+        {children}
+      </section>
     </div>
   );
 }

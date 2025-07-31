@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { priorityOptions, statusOptions } from "@/data";
 import FilterBar from "./FilterBar";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,22 @@ export default function ListPage() {
   const showSpinner = useDelayedSpinner(isFetching, !!tasks);
 
   const [group, setGroup] = useState<string>("status");
-  const [meMode, setMeMode] = useState(false);
+  const [meMode, setMeMode] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("meMode");
+      return stored === "true";
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem("meMode");
+    if (stored !== null) setMeMode(stored === "true");
+  }, []);
+
+  useEffect(() => {
+    sessionStorage.setItem("meMode", String(meMode));
+  }, [meMode]);
 
   const { user } = useAuthStore((state) => state);
 
@@ -54,7 +69,7 @@ export default function ListPage() {
           <div key={key}>
             <h1
               className={cn(
-                "max-lg:ml-2 capitalize",
+                "max-lg:ml-2 capitalize font-medium",
                 list.length ? "mb-3" : ""
               )}
             >

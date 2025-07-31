@@ -7,7 +7,7 @@ import {
   DragStartEvent,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import { GripIcon } from "lucide-react";
+import { GripIcon, User } from "lucide-react";
 import Column from "./Column";
 import { CardForm } from "./Card";
 import { useParams } from "next/navigation";
@@ -19,6 +19,10 @@ import {
 import { groupedTasks } from "../../list/_components/page-content";
 import { Task, TaskStatus } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
+import { AddTaskDialog } from "../../_components/add-task-dialog";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/use-auth-store";
 
 export default function BoardPageContent() {
   const { spaceId } = useParams();
@@ -45,7 +49,7 @@ export default function BoardPageContent() {
   const [localTasks, setLocalTasks] = React.useState<Task[]>([]);
 
   // Init localTasks from server data once
-  React.useEffect(() => {
+  useEffect(() => {
     if (tasks) setLocalTasks(tasks);
   }, [tasks]);
 
@@ -181,11 +185,47 @@ export default function BoardPageContent() {
       );
     }
   };
+  const { user } = useAuthStore((state) => state);
+  const [meMode, setMeMode] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("meMode");
+      return stored === "true";
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem("meMode");
+    if (stored !== null) setMeMode(stored === "true");
+  }, []);
+
+  useEffect(() => {
+    sessionStorage.setItem("meMode", String(meMode));
+  }, [meMode]);
+
+  const myTasks = user
+    ? tasks?.filter((task) => task.assignees.some((u) => u.id === user.id))
+    : [];
 
   if (!isClient) return;
 
   return (
-    <div>
+    <div className='space-y-5 mt-2.5'>
+      <div className='flex items-center gap-4'>
+        <Button
+          type='button'
+          onClick={() => setMeMode(!meMode)}
+          className={cn(
+            "rounded-full h-[34px] border text-[11px] md:text-[13px]  bg-background text-muted-foreground hover:bg-background  hover:border-muted-foreground",
+            meMode &&
+              "bg-primary text-background hover:bg-primary border-primary"
+          )}
+        >
+          <User className='size-3.5! ' />
+          <span>Me Mode</span>
+        </Button>
+        <AddTaskDialog />
+      </div>
       <DndContext
         // sensors={sensors}
         onDragEnd={handleDragEnd}
@@ -194,7 +234,7 @@ export default function BoardPageContent() {
         <div className='flex gap-4'>
           {Object.entries(
             groupedTasks({
-              tasks: localTasks,
+              tasks: meMode ? myTasks : localTasks,
               group: "status",
             })
           ).map(([key, list], index) => (
