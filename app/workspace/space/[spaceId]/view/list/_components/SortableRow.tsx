@@ -207,7 +207,7 @@ export function SortbaleRow({
                     : "flex items-center justify-between w-full"
                 )}
               >
-                <p className='line-clamp-1'>{data.title}</p>
+                <p className='line-clamp-1 w-48'>{data.title}</p>
                 <Button
                   size={"icon"}
                   variant={"ghost"}

@@ -52,10 +52,10 @@ export function CardForm({ task }: { task: Task }) {
     <Form {...form}>
       <form className='space-y-0.5'>
         {formConfig.map((item, index) => (
-          <div className='flex items-center w-9/12 gap-3' key={index}>
+          <div className='flex items-center w-10/12 gap-3' key={index}>
             <Label
               htmlFor={item.name + task.id}
-              className='text-muted-foreground w-20'
+              className='text-muted-foreground w-24'
             >
               {item.label}
             </Label>

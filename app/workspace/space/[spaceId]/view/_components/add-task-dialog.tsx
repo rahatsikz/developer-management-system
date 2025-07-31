@@ -47,7 +47,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function AddTaskDialog() {
+export function AddTaskDialog({ taskDueDate }: { taskDueDate?: string }) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -57,7 +57,7 @@ export function AddTaskDialog() {
       title: "",
       assignees: [],
       priority: "",
-      dueDate: "",
+      dueDate: taskDueDate || "",
     },
   });
 
@@ -110,10 +110,11 @@ export function AddTaskDialog() {
             className={cn(
               isLargeDevice ? "" : "rounded-full",
               "text-[13px]",
-              isBoardRoute && "rounded-full gap-1.5 px-4 h-[34px]"
+              isBoardRoute && "rounded-full gap-1.5 px-4 h-[34px]",
+              taskDueDate && "w-full"
             )}
           >
-            <Plus className='size-3.5!' />
+            {!taskDueDate && <Plus className='size-3.5!' />}
             <span>Add Task</span>
           </Button>
         ) : (
