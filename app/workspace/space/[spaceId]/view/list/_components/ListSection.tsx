@@ -109,7 +109,6 @@ export default function ListSection({
           setTimeout(() => {
             queryClient.invalidateQueries({ queryKey: ["tasks"] });
           }, 800);
-          console.log("Task order updated successfully");
         },
       }
     );

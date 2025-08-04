@@ -148,7 +148,6 @@ function OptionList({
                     options.find((indvidual) => indvidual.value === value)
                       ?.value
                   );
-                  console.log(value);
                 }}
               >
                 {item.icon} {item.label}

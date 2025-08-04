@@ -59,9 +59,6 @@ export default function ListPage() {
     ? tasks?.filter((task) => task.assignees.some((u) => u.id === user.id))
     : [];
 
-  const damnTask = groupedTasks({ tasks: meMode ? myTasks : tasks, group });
-  console.log(damnTask, "damnTask");
-
   return (
     <section>
       <FilterBar

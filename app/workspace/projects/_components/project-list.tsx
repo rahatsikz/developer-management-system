@@ -16,8 +16,6 @@ import Link from "next/link";
 export default function ProjectList() {
   const { data, isFetching } = useGetProjects({});
 
-  console.log(data);
-
   if (isFetching)
     return (
       <div className='flex items-center gap-2'>

@@ -17,8 +17,6 @@ const Column = ({
     id,
   });
 
-  console.log(id, "column");
-
   return (
     <div
       ref={setNodeRef}
