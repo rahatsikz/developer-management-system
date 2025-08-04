@@ -36,9 +36,11 @@ const FilterBar = ({
   meMode: boolean;
   setMeMode: (meMode: boolean) => void;
 }) => {
+  const savedGroup =
+    typeof window !== "undefined" ? sessionStorage.getItem("group") : null;
   const form = useForm({
     defaultValues: {
-      group: groupOptions[2].value,
+      group: savedGroup ?? groupOptions[2].value,
     },
   });
 
@@ -86,7 +88,7 @@ const FilterBar = ({
   };
 
   return (
-    <div className='mt-0.5 md:ml-0.5 flex  gap-1.5 md:gap-4 items-center max-md:justify-between 2xl:justify-between'>
+    <div className='mt-0.5 md:ml-0.5 flex  gap-2.5 md:gap-4 items-center max-md:justify-between 2xl:justify-between'>
       <Form {...form}>
         <form className='flex gap-1.5 md:gap-4 items-center'>
           <FormField
@@ -98,6 +100,7 @@ const FilterBar = ({
                   onValueChange={(value) => {
                     field.onChange(value);
                     groupChangeHandler(value);
+                    sessionStorage.setItem("group", value);
                   }}
                   defaultValue={field.value}
                 >

@@ -7,8 +7,9 @@ import ListSection from "./ListSection";
 import { useParams } from "next/navigation";
 import { useGetTasksBySpaceId } from "@/api/task.query";
 import { useDelayedSpinner } from "@/hooks/use-delayed-spinner";
-import { Task } from "@/types";
+import { Task, User } from "@/types";
 import { useAuthStore } from "@/store/use-auth-store";
+import { useGetSpaceById } from "@/api/space.query";
 
 type GroupKey = "status" | "priority" | "assignee";
 
@@ -20,11 +21,17 @@ export default function ListPage() {
     isFetching,
     isLoading,
   } = useGetTasksBySpaceId(spaceId as string);
+  const { data: space } = useGetSpaceById(spaceId as string);
   const [isAddingTask, setIsAddingTask] = useState<string | null>(null);
 
   const showSpinner = useDelayedSpinner(isFetching, !!tasks);
 
-  const [group, setGroup] = useState<string>("status");
+  const [group, setGroup] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("group") ?? "status";
+    }
+    return "status";
+  });
   const [meMode, setMeMode] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       const stored = sessionStorage.getItem("meMode");
@@ -52,6 +59,9 @@ export default function ListPage() {
     ? tasks?.filter((task) => task.assignees.some((u) => u.id === user.id))
     : [];
 
+  const damnTask = groupedTasks({ tasks: meMode ? myTasks : tasks, group });
+  console.log(damnTask, "damnTask");
+
   return (
     <section>
       <FilterBar
@@ -60,31 +70,38 @@ export default function ListPage() {
         setMeMode={setMeMode}
       />
       <div className='space-y-7 mt-4 lg:mt-8'>
-        {Object.entries(
-          groupedTasks({
-            tasks: meMode ? myTasks : tasks,
-            group,
-          })
-        ).map(([key, list]) => (
-          <div key={key}>
-            <h1
-              className={cn(
-                "max-lg:ml-2 capitalize font-medium",
-                list.length ? "mb-3" : ""
-              )}
-            >
-              {key === "unassigned"
-                ? "Unassigned"
-                : key.toLowerCase().split("_").join(" ")}
-            </h1>
-            <ListSection
-              taskList={list}
-              groupBy={key}
-              isAddingTask={isAddingTask}
-              setIsAddingTask={setIsAddingTask}
-            />
-          </div>
-        ))}
+        {groupedTasks({
+          tasks: meMode ? myTasks : tasks,
+          group,
+          allUsers: space?.members,
+        })?.map(
+          ({
+            key,
+            label,
+            tasks,
+          }: {
+            key: string;
+            label: string;
+            tasks: Task[];
+          }) => (
+            <div key={key}>
+              <h1
+                className={cn(
+                  "max-lg:ml-2 capitalize font-medium",
+                  tasks.length ? "mb-3" : ""
+                )}
+              >
+                {label.split("_").join(" ").toLowerCase()}
+              </h1>
+              <ListSection
+                taskList={tasks}
+                groupBy={key}
+                isAddingTask={isAddingTask}
+                setIsAddingTask={setIsAddingTask}
+              />
+            </div>
+          )
+        )}
       </div>
     </section>
   );
@@ -160,80 +177,114 @@ function TableSkeleton() {
   );
 }
 
+interface Bucket {
+  key: string;
+  label: string;
+  tasks: Task[];
+}
+
 export function groupedTasks({
   tasks,
   group,
+  allUsers = [], // Add this optional param
 }: {
   tasks: Task[] | undefined;
   group: string;
-}) {
-  const groupedByStatus = groupBy(
-    tasks ? tasks : [],
-    "status",
-    statusOptions.map((item) => item.value)
-  );
-  const groupedByPriority = groupBy(
-    tasks ? tasks : [],
-    "priority",
-    priorityOptions.map((item) => item.value)
-  );
-  const groupedByAssignee = groupBy(tasks ? tasks : [], "assignee");
-
-  let groupedTasks;
-
-  switch (group) {
-    case "status":
-      groupedTasks = groupedByStatus;
-      break;
-    case "priority":
-      groupedTasks = groupedByPriority;
-      break;
-    case "assignee":
-      groupedTasks = groupedByAssignee;
-      break;
-    case "none":
-      groupedTasks = { all: tasks ?? [] };
-      break;
-
-    default:
-      groupedTasks = {};
+  allUsers?: User[];
+}): Bucket[] {
+  if (group === "none") {
+    return [
+      {
+        key: "all",
+        label: "All Tasks",
+        tasks: tasks ?? [],
+      },
+    ];
   }
 
-  return groupedTasks;
+  if (group === "status") {
+    return groupBy(
+      tasks ?? [],
+      "status",
+      statusOptions.map((o) => o.value)
+    );
+  }
+
+  if (group === "priority") {
+    return groupBy(
+      tasks ?? [],
+      "priority",
+      priorityOptions.map((o) => o.value)
+    );
+  }
+
+  if (group === "assignee") {
+    const buckets = groupBy(tasks ?? [], "assignee");
+
+    // Add unassigned bucket if missing
+    if (!buckets.some((b) => b.key === "unassigned")) {
+      buckets.push({
+        key: "unassigned",
+        label: "Unassigned",
+        tasks: [],
+      });
+    }
+
+    allUsers.forEach((user) => {
+      if (!buckets.some((b) => b.key === user.id)) {
+        buckets.push({
+          key: user.id,
+          label: user.name,
+          tasks: [],
+        });
+      }
+    });
+
+    return [
+      ...(allUsers
+        .map((user) => buckets.find((b) => b.key === user.id))
+        .filter(Boolean) as Bucket[]),
+      buckets.find((b) => b.key === "unassigned")!,
+    ];
+  }
+
+  return [];
 }
 
-function groupBy(
+export function groupBy(
   tasks: Task[],
-  groupBy: GroupKey,
+  groupBy: Exclude<GroupKey, "none">,
   possibleKeys: string[] = []
-): Record<string, Task[]> {
-  const grouped: Record<string, Task[]> = {};
+): Bucket[] {
+  const buckets: Record<string, Bucket> = {};
 
   if (groupBy !== "assignee") {
     for (const key of possibleKeys) {
-      grouped[key] = [];
+      buckets[key] = { key, label: key, tasks: [] };
     }
   }
 
-  for (const task of tasks) {
+  for (const t of tasks) {
     if (groupBy === "assignee") {
-      if (!task.assignees || task.assignees.length === 0) {
-        // No assignees
-        grouped["unassigned"] ??= [];
-        grouped["unassigned"].push(task);
+      if (!t.assignees?.length) {
+        buckets["unassigned"] ??= {
+          key: "unassigned",
+          label: "Unassigned",
+          tasks: [],
+        };
+        buckets["unassigned"].tasks.push(t);
       } else {
-        for (const user of task.assignees) {
-          const key = user.name || user.email || "unknown"; // Pick your identifier
-          grouped[key] ??= [];
-          grouped[key].push(task);
+        for (const u of t.assignees) {
+          buckets[u.id] ??= { key: u.id, label: u.name, tasks: [] };
+          buckets[u.id].tasks.push(t);
         }
       }
     } else {
-      const key = task[groupBy] ?? "unknown";
-      grouped[key] ??= [];
-      grouped[key].push(task);
+      const val = (t as any)[groupBy] ?? "unknown";
+      buckets[val] ??= { key: val, label: val, tasks: [] };
+      buckets[val].tasks.push(t);
     }
   }
 
-  return grouped;
+  return Object.values(buckets);
 }
