@@ -31,11 +31,12 @@ const FilterBar = ({
   groupChangeHandler,
   meMode,
   setMeMode,
+  ...props
 }: {
   groupChangeHandler: (group: string) => void;
   meMode: boolean;
   setMeMode: (meMode: boolean) => void;
-}) => {
+} & React.HTMLAttributes<HTMLDivElement>) => {
   const savedGroup =
     typeof window !== "undefined" ? sessionStorage.getItem("group") : null;
   const form = useForm({
@@ -88,7 +89,12 @@ const FilterBar = ({
   };
 
   return (
-    <div className='mt-0.5 md:ml-0.5 flex  gap-2.5 md:gap-4 items-center max-md:justify-between 2xl:justify-between'>
+    <div
+      className={cn(
+        "mt-0.5 md:ml-0.5 flex gap-2.5 md:gap-4 items-center max-md:justify-between 2xl:justify-between",
+        props.className
+      )}
+    >
       <Form {...form}>
         <form className='flex gap-1.5 md:gap-4 items-center'>
           <FormField

@@ -22,7 +22,7 @@ const Column = ({
   return (
     <div
       ref={setNodeRef}
-      className='border-2 border-muted-foreground/70 min-h-96 min-w-[290px] xl:min-w-96 py-3 px-4 rounded'
+      className='border-2 border-muted-foreground/25 min-h-96 min-w-[290px] xl:min-w-96 py-3 px-4 rounded'
     >
       <h1 className='capitalize font-medium'>
         {title?.toLowerCase().split("_").join(" ")}

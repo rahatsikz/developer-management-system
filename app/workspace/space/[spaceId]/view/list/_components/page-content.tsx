@@ -68,8 +68,9 @@ export default function ListPage() {
         groupChangeHandler={setGroup}
         meMode={meMode}
         setMeMode={setMeMode}
+        className='lg:-ml-0.5'
       />
-      <div className='space-y-7 mt-4 lg:mt-8'>
+      <div className='space-y-7 mt-4'>
         {groupedTasks({
           tasks: meMode ? myTasks : tasks,
           group,
