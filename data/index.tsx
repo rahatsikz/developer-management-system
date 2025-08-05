@@ -7,6 +7,7 @@ import {
   CircleFadingArrowUp,
   Flag,
   Folder,
+  Layers,
   LucideIcon,
   User,
 } from "lucide-react";
@@ -191,5 +192,10 @@ export const SidebarOptions: {
     title: "Projects",
     url: "/workspace/projects",
     icon: Folder,
+  },
+  {
+    title: "Spaces",
+    url: "/workspace/space",
+    icon: Layers,
   },
 ];

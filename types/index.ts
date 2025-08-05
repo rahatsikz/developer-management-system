@@ -33,7 +33,7 @@ export interface Project {
 export interface Space {
   id: string;
   name: string;
-  repo: Repository;
+  repo?: Repository;
   tasks: Task[];
   members: User[];
   createdAt: Date;
