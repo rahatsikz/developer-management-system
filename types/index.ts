@@ -57,6 +57,27 @@ export interface User {
   tasks: Task[];
 }
 
+export type Chat = {
+  id: string;
+  users: User[];
+  createdAt: Date;
+  updatedAt: Date;
+  spaceId: string;
+  space: Space;
+  Message: Message[];
+};
+
+export type Message = {
+  id: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  chat: Chat;
+  chatId: string;
+  sender: User;
+  senderId: string;
+};
+
 export type Repository = {
   id: string;
   githubId: number;

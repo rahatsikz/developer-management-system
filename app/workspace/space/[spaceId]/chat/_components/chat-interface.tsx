@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Search,
   Phone,
@@ -9,99 +9,41 @@ import {
   Smile,
   SendHorizonal,
   ArrowLeft,
+  Plus,
+  Users,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Form } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
+import { io } from "socket.io-client";
+import { useAuthStore } from "@/store/use-auth-store";
+import { useCreateChat, useRecentChatsBySpaceId } from "@/api/chat.query";
+import { useParams } from "next/navigation";
+import { Chat, Message, User } from "@/types";
+import { format } from "date-fns";
+import { useGetSpaceById } from "@/api/space.query";
+import { useQueryClient } from "@tanstack/react-query";
+import axiosInstance from "@/lib/axios";
 
-interface Chat {
-  id: string;
-  name: string;
-  lastMessage: string;
-  time: string;
-  avatar: string;
-  unread?: number;
-}
-
-interface Message {
-  id: string;
-  text: string;
-  time: string;
-  sent: boolean;
-}
-
-const chats: Chat[] = [
-  {
-    id: "1",
-    name: "John Doe",
-    lastMessage: "Hey, how are you doing?",
-    time: "10:30 AM",
-    avatar: "",
-    unread: 2,
-  },
-  {
-    id: "2",
-    name: "Sarah Wilson",
-    lastMessage: "Thanks for the help!",
-    time: "9:45 AM",
-    avatar: "",
-  },
-  {
-    id: "3",
-    name: "Mike Johnson",
-    lastMessage: "See you tomorrow",
-    time: "Yesterday",
-    avatar: "",
-  },
-  {
-    id: "4",
-    name: "Emily Davis",
-    lastMessage: "Perfect! Let me know",
-    time: "Yesterday",
-    avatar: "",
-    unread: 1,
-  },
-  {
-    id: "5",
-    name: "Team Group",
-    lastMessage: "Meeting at 3 PM",
-    time: "Monday",
-    avatar: "",
-  },
-];
-
-const messages: Message[] = [
-  {
-    id: "1",
-    text: "Hey, how are you doing?",
-    time: "10:30 AM",
-    sent: false,
-  },
-  {
-    id: "2",
-    text: "I'm doing great! Thanks for asking. How about you?",
-    time: "10:32 AM",
-    sent: true,
-  },
-  {
-    id: "3",
-    text: "Pretty good! Just working on some projects",
-    time: "10:33 AM",
-    sent: false,
-  },
-  {
-    id: "4",
-    text: "That sounds interesting! What kind of projects?",
-    time: "10:35 AM",
-    sent: true,
-  },
-];
+const socket = io("http://localhost:5000", {
+  withCredentials: true,
+});
 
 // Form schemas
 const searchFormSchema = z.object({
@@ -115,13 +57,73 @@ const messageFormSchema = z.object({
     .max(1000, "Message too long"),
 });
 
+const userSearchFormSchema = z.object({
+  query: z.string(),
+});
+
 type SearchFormValues = z.infer<typeof searchFormSchema>;
 type MessageFormValues = z.infer<typeof messageFormSchema>;
+type UserSearchFormValues = z.infer<typeof userSearchFormSchema>;
 
 export default function ChatInterface() {
-  const [selectedChat, setSelectedChat] = useState<Chat>(chats[0]);
+  const queryClient = useQueryClient();
+  const { spaceId } = useParams();
+  const { data: chats } = useRecentChatsBySpaceId(spaceId as string);
+  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showChatList, setShowChatList] = useState(true);
+  const [chatMessages, setChatMessages] = useState<Message[]>([]);
+
+  // New chat creation state
+  const [isCreateChatOpen, setIsCreateChatOpen] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const { data: space } = useGetSpaceById(spaceId as string);
+
+  useEffect(() => {
+    if (chats?.length && !selectedChat) {
+      setSelectedChat(chats[0]);
+    }
+  }, [chats, selectedChat]);
+
+  useEffect(() => {
+    if (!selectedChat?.id) return;
+    socket.emit("joinChat", selectedChat.id);
+    return () => {
+      socket.emit("leaveChat", selectedChat.id);
+    };
+  }, [selectedChat?.id]);
+
+  useEffect(() => {
+    const handleNewMessage = (message: Message) => {
+      if (message.chatId === selectedChat?.id) {
+        setChatMessages((prev) => [...prev, message]);
+      }
+    };
+
+    socket.on("newMessage", handleNewMessage);
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+    };
+  }, [selectedChat?.id]);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const res = await axiosInstance.get(
+          `/chats/${selectedChat?.id}/messages`
+        );
+        setChatMessages(res.data?.data);
+      } catch (err) {
+        console.error("Failed to load messages", err);
+      }
+    };
+
+    if (selectedChat?.id) {
+      fetchMessages();
+    }
+  }, [selectedChat]);
 
   // Search form
   const searchForm = useForm<SearchFormValues>({
@@ -139,13 +141,36 @@ export default function ChatInterface() {
     },
   });
 
-  const filteredChats = chats.filter((chat) =>
-    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // User search form
+  const userSearchForm = useForm<UserSearchFormValues>({
+    resolver: zodResolver(userSearchFormSchema),
+    defaultValues: {
+      query: "",
+    },
+  });
+
+  const filteredChats = searchQuery
+    ? chats?.filter((chat: Chat) =>
+        chat.users
+          .map((user) => user.name.toLowerCase())
+          .includes(searchQuery.toLowerCase())
+      )
+    : chats;
+
+  const filteredUsers = space?.members?.filter(
+    (user: User) =>
+      user.name.toLowerCase().includes(userSearchQuery.toLowerCase()) &&
+      user.id !== useAuthStore.getState().user?.id
   );
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     searchForm.setValue("query", value);
+  };
+
+  const handleUserSearchChange = (value: string) => {
+    setUserSearchQuery(value);
+    userSearchForm.setValue("query", value);
   };
 
   const handleChatSelect = (chat: Chat) => {
@@ -157,11 +182,66 @@ export default function ChatInterface() {
     setShowChatList(true);
   };
 
+  const handleUserSelect = (user: User, checked: boolean) => {
+    if (checked) {
+      setSelectedUsers((prev) => [...prev, user]);
+    } else {
+      setSelectedUsers((prev) => prev.filter((u) => u.id !== user.id));
+    }
+  };
+
+  const handleRemoveSelectedUser = (userId: string) => {
+    setSelectedUsers((prev) => prev.filter((u) => u.id !== userId));
+  };
+
+  const { mutate: createChat } = useCreateChat();
+
+  const handleCreateChat = async () => {
+    if (selectedUsers.length === 0) return;
+
+    setIsCreatingChat(true);
+    try {
+      createChat(
+        {
+          spaceId: spaceId as string,
+          userIds: selectedUsers.map((u) => u.id),
+        },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["chats"] });
+            setIsCreateChatOpen(false);
+            setSelectedUsers([]);
+            setUserSearchQuery("");
+          },
+        }
+      );
+    } catch (err) {
+      console.error("Failed to create chat", err);
+    } finally {
+      setIsCreatingChat(false);
+    }
+  };
+
+  const { user } = useAuthStore((state) => state);
+
   const onSendMessage = (data: MessageFormValues) => {
     console.log("Sending message:", data.message);
-    // Here you would typically add the message to your state/database
+    const payload = {
+      chatId: selectedChat?.id,
+      userId: user?.id,
+      content: data.message,
+    };
+    socket.emit("sendMessage", payload);
     messageForm.reset();
   };
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  const otherUser = selectedChat?.users.find((u) => u.id !== user?.id);
 
   return (
     <div className='flex h-[calc(100dvh-95.5px)] overflow-hidden md:h-[calc(100dvh-106.5px)] border border-border mt-4 bg-background'>
@@ -178,11 +258,140 @@ export default function ChatInterface() {
             <h1 className='text-lg md:text-xl font-semibold text-foreground'>
               Chats
             </h1>
+            <Dialog open={isCreateChatOpen} onOpenChange={setIsCreateChatOpen}>
+              <DialogTrigger asChild>
+                <Button size='sm' className='h-8 w-8' variant='outline'>
+                  <Plus className='h-4 w-4' />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className='sm:max-w-md'>
+                <DialogHeader>
+                  <DialogTitle className='flex items-center gap-2'>
+                    <Users className='h-5 w-5' />
+                    Create New Chat
+                  </DialogTitle>
+                </DialogHeader>
+                <div className='space-y-4'>
+                  {/* Selected Users */}
+                  {selectedUsers.length > 0 && (
+                    <div className='space-y-2'>
+                      <p className='text-sm font-medium'>Selected Users:</p>
+                      <div className='flex flex-wrap gap-2'>
+                        {selectedUsers.map((user) => (
+                          <Badge
+                            key={user.id}
+                            variant='secondary'
+                            className='flex items-center gap-1'
+                          >
+                            {user.name}
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              className='h-4 w-4 p-0 hover:bg-transparent'
+                              onClick={() => handleRemoveSelectedUser(user.id)}
+                            >
+                              <X className='h-3 w-3' />
+                            </Button>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* User Search */}
+                  <Form {...userSearchForm}>
+                    <form className='relative'>
+                      <div className='relative'>
+                        <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
+                        <Input
+                          placeholder='Search users...'
+                          name='query'
+                          formControl={userSearchForm.control}
+                          onChange={(e) => {
+                            handleUserSearchChange(e.target.value);
+                          }}
+                          className='pl-10'
+                        />
+                      </div>
+                    </form>
+                  </Form>
+
+                  {/* User List */}
+                  <ScrollArea className='h-64'>
+                    <div className='space-y-2'>
+                      {filteredUsers?.map((user) => (
+                        <div
+                          key={user.id}
+                          className='flex items-center space-x-3 p-2 rounded-lg hover:bg-accent'
+                        >
+                          <Checkbox
+                            id={user.id}
+                            checked={selectedUsers.some(
+                              (u) => u.id === user.id
+                            )}
+                            onCheckedChange={(checked) =>
+                              handleUserSelect(user, checked as boolean)
+                            }
+                          />
+                          <Avatar className='h-8 w-8'>
+                            <AvatarImage
+                              src={user.avatarUrl || "/placeholder.svg"}
+                              alt={user.name}
+                            />
+                            <AvatarFallback className='bg-accent text-xs border border-border'>
+                              {user.name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className='flex-1 min-w-0'>
+                            <p className='text-sm font-medium truncate'>
+                              {user.name}
+                            </p>
+                            <p className='text-xs text-muted-foreground truncate'>
+                              {user.email}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      {filteredUsers?.length === 0 && (
+                        <p className='text-sm text-muted-foreground text-center py-4'>
+                          No users found
+                        </p>
+                      )}
+                    </div>
+                  </ScrollArea>
+
+                  {/* Create Button */}
+                  <div className='flex justify-end gap-2'>
+                    <Button
+                      variant='outline'
+                      onClick={() => {
+                        setIsCreateChatOpen(false);
+                        setSelectedUsers([]);
+                        setUserSearchQuery("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleCreateChat}
+                      disabled={selectedUsers.length === 0 || isCreatingChat}
+                    >
+                      {isCreatingChat
+                        ? "Creating..."
+                        : `Create Chat (${selectedUsers.length})`}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
         {/* Search Bar */}
-        <div className='p-3 md:p-4'>
+        <div className='p-3 md:p-4 border-b border-border'>
           <Form {...searchForm}>
             <form className='relative'>
               <div className='relative'>
@@ -203,49 +412,56 @@ export default function ChatInterface() {
 
         {/* Chat List */}
         <ScrollArea className='flex-1 h-[calc(100dvh-220px)] md:max-h-[calc(100dvh-238px)]'>
-          {filteredChats.map((chat) => (
-            <div
-              key={chat.id}
-              onClick={() => handleChatSelect(chat)}
-              className={`p-3 md:p-4 cursor-pointer border-b border-border ${
-                selectedChat.id === chat.id
-                  ? "bg-accent hover:bg-accent border-l-4 border-l-green-600/70"
-                  : " hover:bg-accent/50"
-              }`}
-            >
-              <div className='flex items-center space-x-3'>
-                <Avatar className='h-10 w-10 md:h-12 md:w-12'>
-                  <AvatarImage src={chat.avatar} alt={chat.name} />
-                  <AvatarFallback className='bg-accent text-xs border border-border'>
-                    {chat.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <div className='flex-1 min-w-0'>
-                  <div className='flex justify-between items-center'>
-                    <h3 className='font-medium text-foreground truncate text-sm md:text-base'>
-                      {chat.name}
-                    </h3>
-                    <span className='text-xs text-muted-foreground font-medium'>
-                      {chat.time}
-                    </span>
-                  </div>
-                  <div className='flex justify-between items-center mt-1'>
-                    <p className='text-xs md:text-sm text-foreground/70 truncate'>
-                      {chat.lastMessage}
-                    </p>
-                    {chat.unread && (
-                      <span className='bg-green-600/70 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center'>
-                        {chat.unread}
+          {filteredChats?.map((chat) => {
+            const otherUser = chat.users.find((u) => u.id !== user?.id);
+
+            return (
+              <div
+                key={chat.id}
+                onClick={() => handleChatSelect(chat)}
+                className={`p-3 md:p-4 cursor-pointer border-b border-border ${
+                  selectedChat?.id === chat.id
+                    ? "bg-accent hover:bg-accent border-l-4 border-l-green-600/70"
+                    : " hover:bg-accent/50"
+                }`}
+              >
+                <div className='flex items-center space-x-3'>
+                  <Avatar className='h-10 w-10 md:h-12 md:w-12'>
+                    <AvatarImage
+                      src={otherUser?.avatarUrl || "/placeholder.svg"}
+                      alt={otherUser?.name}
+                    />
+                    <AvatarFallback className='bg-accent text-xs border border-border'>
+                      {otherUser?.name
+                        ?.split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className='flex-1 min-w-0'>
+                    <div className='flex justify-between items-center'>
+                      <h3 className='font-medium text-foreground truncate text-sm md:text-base'>
+                        {otherUser?.name}
+                      </h3>
+                      <span className='text-xs text-muted-foreground font-medium'>
+                        {chat.Message.length > 0 &&
+                          format(
+                            chat.Message[chat.Message.length - 1].createdAt,
+                            "PPP"
+                          )}
                       </span>
-                    )}
+                    </div>
+                    <div className='flex justify-between items-center mt-1'>
+                      <p className='text-xs md:text-sm text-foreground/70 truncate'>
+                        {chat.Message.length > 0 &&
+                          chat.Message[chat.Message.length - 1].content}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </ScrollArea>
       </div>
 
@@ -268,9 +484,12 @@ export default function ChatInterface() {
               <ArrowLeft className='h-5 w-5' />
             </Button>
             <Avatar className='h-8 w-8 md:h-10 md:w-10'>
-              <AvatarImage src={selectedChat.avatar} alt={selectedChat.name} />
+              <AvatarImage
+                src={otherUser?.avatarUrl || "/placeholder.svg"}
+                alt={otherUser?.name}
+              />
               <AvatarFallback className='bg-accent text-xs border border-border'>
-                {selectedChat.name
+                {otherUser?.name
                   .split(" ")
                   .map((n) => n[0])
                   .join("")}
@@ -278,7 +497,7 @@ export default function ChatInterface() {
             </Avatar>
             <div>
               <h2 className='font-semibold text-foreground text-sm md:text-base'>
-                {selectedChat.name}
+                {otherUser?.name}
               </h2>
             </div>
           </div>
@@ -308,29 +527,32 @@ export default function ChatInterface() {
         </div>
 
         {/* Messages Area */}
-        <ScrollArea className='flex-1 p-3 md:p-4 bg-background h-[calc(100dvh-220px)] md:max-h-[calc(100dvh-240px)]'>
+        <ScrollArea
+          className='flex-1 p-3 md:p-4 bg-background h-[calc(100dvh-220px)] md:max-h-[calc(100dvh-240px)]'
+          ref={scrollRef}
+        >
           <div className='space-y-3 md:space-y-4'>
-            {messages.map((message) => (
+            {chatMessages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${
-                  message.sent ? "justify-end" : "justify-start"
-                }`}
+                className={cn(
+                  "flex",
+                  message.senderId === user?.id
+                    ? "justify-start"
+                    : "justify-end"
+                )}
               >
                 <div
-                  className={`max-w-[280px] sm:max-w-xs lg:max-w-md px-3 md:px-4 py-2 rounded-lg ${
-                    message.sent
+                  className={cn(
+                    "max-w-[280px] sm:max-w-xs lg:max-w-md px-3 md:px-4 py-2 rounded-lg",
+                    message.senderId !== user?.id
                       ? "bg-green-600/70 text-white"
                       : "bg-accent text-foreground border border-border"
-                  }`}
+                  )}
                 >
-                  <p className='text-sm'>{message.text}</p>
-                  <p
-                    className={`text-xs mt-1 ${
-                      message.sent ? "text-green-100" : "text-gray-500"
-                    }`}
-                  >
-                    {message.time}
+                  <p className='text-sm'>{message.content}</p>
+                  <p className={`text-xs mt-1`}>
+                    {format(message.createdAt, "PPP")}
                   </p>
                 </div>
               </div>
@@ -338,7 +560,7 @@ export default function ChatInterface() {
           </div>
         </ScrollArea>
 
-        {/* chat Input */}
+        {/* Chat Input */}
         <div className='bg-background border-t border-border p-3 md:p-4'>
           <Form {...messageForm}>
             <form
