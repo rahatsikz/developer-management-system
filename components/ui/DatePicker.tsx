@@ -31,14 +31,20 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
   ({ label, formController, name, ...props }, ref) => {
     const [isOpen, setIsOpen] = React.useState(false);
 
+    const utcMidnight = (date: Date) => {
+      return new Date(
+        Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+      );
+    };
+
     return (
       <FormField
         control={formController}
         name={name}
         render={({ field }) => (
-          <FormItem className='flex flex-col'>
+          <FormItem className='flex flex-col w-full'>
             {label ? <FormLabel>{label}</FormLabel> : null}
-            <Popover open={isOpen} onOpenChange={setIsOpen}>
+            <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
               <PopoverTrigger asChild>
                 <FormControl>
                   <Button
@@ -73,7 +79,12 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                   defaultMonth={field.value}
                   selected={field.value}
                   onSelect={(date) => {
-                    field.onChange(date?.toISOString());
+                    if (date) {
+                      date = utcMidnight(date);
+                      field.onChange(date.toISOString());
+                      props.onBlur?.(date.toISOString() as any);
+                    }
+
                     setIsOpen(false);
                   }}
                   disabled={(date) => {

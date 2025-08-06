@@ -10,16 +10,16 @@ import {
 import { Space } from "@/types";
 import { format } from "date-fns";
 import { Layers, Loader2, Users } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useGetSpacesByProjectId } from "@/api/space.query";
 import { AddSpaceMemberDialog } from "./add-space-member-dialog";
 import { useDelayedSpinner } from "@/hooks/use-delayed-spinner";
 
 export default function SpacesList() {
   const { projectId } = useParams();
-  const { data, isFetching } = useGetSpacesByProjectId(projectId as string);
+  const { data, isLoading } = useGetSpacesByProjectId(projectId as string);
 
-  const showSpinner = useDelayedSpinner(isFetching, !!data);
+  const showSpinner = useDelayedSpinner(isLoading, !!data);
 
   if (showSpinner) {
     return (
@@ -41,9 +41,12 @@ export default function SpacesList() {
 
 function SpaceCard({ space }: { space: Space }) {
   const { projectId } = useParams();
+  const { push } = useRouter();
   return (
-    // <Link href={`/workspace/company/${company.id}/details`}>
-    <Card className='overflow-hidden cursor-pointer '>
+    <Card
+      onClick={() => push(`/workspace/space/${space.id}/view/list`)}
+      className='overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary'
+    >
       <CardHeader className='pb-3 space-y-2'>
         <CardTitle className='flex items-center gap-2.5 tracking-normal capitalize'>
           <Layers className='size-[18px] text-muted-foreground' />
@@ -62,12 +65,13 @@ function SpaceCard({ space }: { space: Space }) {
         </div>
       </CardContent>
       <CardFooter className='justify-end'>
-        <AddSpaceMemberDialog
-          spaceId={space.id}
-          projectId={projectId as string}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <AddSpaceMemberDialog
+            spaceId={space.id}
+            projectId={projectId as string}
+          />
+        </div>
       </CardFooter>
     </Card>
-    // </Link>
   );
 }

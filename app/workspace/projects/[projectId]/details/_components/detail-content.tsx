@@ -11,10 +11,10 @@ import { useDelayedSpinner } from "@/hooks/use-delayed-spinner";
 
 export default function DetailContent() {
   const { projectId } = useParams();
-  const { data, isFetching } = useGetProject(projectId as string);
+  const { data, isLoading } = useGetProject(projectId as string);
   const { back } = useRouter();
 
-  const showSpinner = useDelayedSpinner(isFetching, !!data);
+  const showSpinner = useDelayedSpinner(isLoading, !!data);
 
   if (showSpinner) {
     return (

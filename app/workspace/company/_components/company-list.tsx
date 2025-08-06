@@ -18,8 +18,6 @@ export default function CompanyList() {
   const { user } = useAuthStore((state) => state);
   const { data, isFetching } = useGetMyCompanies(user?.id ?? "");
 
-  console.log(data);
-
   if (isFetching)
     return (
       <div className='flex items-center gap-2'>

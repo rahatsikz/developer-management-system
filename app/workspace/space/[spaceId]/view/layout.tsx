@@ -1,0 +1,17 @@
+import React from "react";
+import ViewTabs from "./_components/view-tabs";
+
+export default function ProjectBoardLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <div className='flex flex-col gap-5 '>
+      <ViewTabs />
+      <section className='xl:px-6 px-4 mt-[60px] lg:mt-[64px]'>
+        {children}
+      </section>
+    </div>
+  );
+}

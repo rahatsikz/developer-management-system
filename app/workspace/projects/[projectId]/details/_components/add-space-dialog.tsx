@@ -21,11 +21,15 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useParams } from "next/navigation";
 import { useCreateSpace } from "@/api/space.query";
+import { useGetProfile } from "@/api/auth.query";
+import { ComboBox } from "@/components/ui/ComboBox";
+import { Project } from "@/types";
 
 const formSchema = z.object({
   name: z.string().min(2, {
     message: "Company name must be at least 2 characters.",
   }),
+  project: z.string(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -33,27 +37,37 @@ type FormValues = z.infer<typeof formSchema>;
 export function AddSpaceDialog() {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { data: userData } = useGetProfile();
+
+  const projectOptions = userData?.Project?.map((project: Project) => ({
+    label: project.name,
+    value: project.id,
+  }));
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      project: projectOptions && projectOptions[0]?.value,
     },
   });
 
   const { mutate: createSpace, isPending } = useCreateSpace();
   const { projectId } = useParams();
 
+  // console.log(userData);
+
   async function onSubmit(values: FormValues) {
     try {
       const data = {
         name: values.name,
-        projectId: projectId as string,
+        projectId: projectId ? (projectId as string) : values.project,
       };
       createSpace(data, {
         onSuccess: () => {
           toast.success("Space created successfully");
           queryClient.invalidateQueries({ queryKey: ["spaces"] });
+          queryClient.invalidateQueries({ queryKey: ["profile"] });
           form.reset();
           setOpen(false);
         },
@@ -88,8 +102,17 @@ export function AddSpaceDialog() {
               name='name'
               placeholder='Space name'
               disabled={isPending}
-              className='capitalize'
+              className='capitalize placeholder:text-sm'
             />
+            {!projectId && (
+              <ComboBox
+                formControl={form.control}
+                name='project'
+                // label='Project'
+                options={projectOptions}
+                className='w-full border-input border'
+              />
+            )}
             <DialogFooter>
               <Button type='submit' disabled={isPending}>
                 {isPending ? "Creating..." : "Create Space"}

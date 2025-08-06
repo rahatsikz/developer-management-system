@@ -68,6 +68,7 @@ export function AddSpaceMemberDialog({
             } else {
               queryClient.invalidateQueries({ queryKey: ["spaces"] });
               queryClient.invalidateQueries({ queryKey: ["space"] });
+              queryClient.invalidateQueries({ queryKey: ["profile"] });
             }
           }, 800);
           setOpen(false);

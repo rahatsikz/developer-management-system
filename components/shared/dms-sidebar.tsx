@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -20,10 +20,17 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LogOut } from "lucide-react";
-import { useLogout } from "@/api/auth.query";
+import { useGetProfile, useLogout } from "@/api/auth.query";
 import { useAuthStore } from "@/store/use-auth-store";
 import { toast } from "sonner";
 import { SidebarOptions } from "@/data";
+import { Space } from "@/types";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "../ui/accordion";
 
 export default function DMSSidebar() {
   const pathname = usePathname();
@@ -33,6 +40,21 @@ export default function DMSSidebar() {
 
   const { mutate: logout } = useLogout();
   const { setUser } = useAuthStore((state) => state);
+  const { data: userData } = useGetProfile();
+
+  const [openAccordion, setOpenAccordion] = useState<string | undefined>(() => {
+    const match = userData?.Spaces?.find((space: Space) =>
+      pathname.includes(`/space/${space.id}`)
+    );
+    return match?.id;
+  });
+
+  useEffect(() => {
+    const match = userData?.Spaces?.find((space: Space) =>
+      pathname.includes(`/space/${space.id}`)
+    );
+    if (match?.id) setOpenAccordion(match.id);
+  }, [pathname, userData?.Spaces]);
 
   const handleLogOut = () => {
     logout(undefined, {
@@ -62,11 +84,10 @@ export default function DMSSidebar() {
               <SidebarMenu className={cn(open && "px-3")}>
                 {SidebarOptions.map((item) => (
                   <SidebarMenuItem
-                    className='flex items-center justify-center'
+                    className='flex flex-col items-center justify-center'
                     key={item.title}
                   >
                     <SidebarMenuButton
-                      // className={cn("hover:text-[#32BA55]")}
                       asChild
                       onMouseEnter={() => {
                         setActive(item.url);
@@ -85,13 +106,7 @@ export default function DMSSidebar() {
                         )}
                       >
                         <item.icon
-                          //   active={
-                          //     active === item.url || pathname === item.url
-                          //       ? "true"
-                          //       : "false"
-                          //   }
                           className={cn(
-                            // "size-6",
                             pathname.includes(item.url) && "text-[#32BA55]"
                           )}
                         />
@@ -105,6 +120,68 @@ export default function DMSSidebar() {
                         </span>
                       </Link>
                     </SidebarMenuButton>
+                    {item.title === "Spaces" &&
+                      pathname.includes(item.url) &&
+                      userData?.Spaces?.length > 0 && (
+                        <div className='my-2.5 text-left w-full ml-3'>
+                          <Accordion
+                            type='single'
+                            collapsible
+                            className='mr-2'
+                            value={openAccordion}
+                            onValueChange={setOpenAccordion}
+                          >
+                            {userData?.Spaces?.map((space: Space) => (
+                              <AccordionItem
+                                key={space.id}
+                                value={space.id}
+                                className='border-b-0'
+                              >
+                                <AccordionTrigger
+                                  className={cn(
+                                    "hover:no-underline pt-0.5 pb-2.5 text-base font-medium"
+                                  )}
+                                >
+                                  {space.name}
+                                </AccordionTrigger>
+                                <AccordionContent className='flex flex-col gap-1.5'>
+                                  <Link
+                                    href={`/space/${space.id}`}
+                                    className={cn(
+                                      pathname.endsWith(`/${space.id}`) &&
+                                        "text-[#32BA55]",
+                                      "font-medium"
+                                    )}
+                                  >
+                                    Overview
+                                  </Link>
+                                  <Link
+                                    href={`/workspace/space/${space.id}/view/list`}
+                                    className={cn(
+                                      pathname.includes(
+                                        `/${space.id}/view/list`
+                                      ) && "text-[#32BA55]",
+                                      "font-medium"
+                                    )}
+                                  >
+                                    Tasks
+                                  </Link>
+                                  <Link
+                                    href={`/space/${space.id}/chat`}
+                                    className={cn(
+                                      pathname.includes(`/${space.id}/chat`) &&
+                                        "text-[#32BA55]",
+                                      "font-medium"
+                                    )}
+                                  >
+                                    Chat
+                                  </Link>
+                                </AccordionContent>
+                              </AccordionItem>
+                            ))}
+                          </Accordion>
+                        </div>
+                      )}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>

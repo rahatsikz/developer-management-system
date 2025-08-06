@@ -21,8 +21,6 @@ export default function DetailContent() {
       </div>
     );
 
-  console.log(data);
-
   return (
     <div className='mt-6 h-[calc(100dvh-72.5px)] max-lg:px-3 px-1'>
       <button
