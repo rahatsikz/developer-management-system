@@ -36,7 +36,7 @@ import { useAuthStore } from "@/store/use-auth-store";
 import { useCreateChat, useRecentChatsBySpaceId } from "@/api/chat.query";
 import { useParams } from "next/navigation";
 import { Chat, Message, User } from "@/types";
-import { format } from "date-fns";
+import { format, isToday } from "date-fns";
 import { useGetSpaceById } from "@/api/space.query";
 import { useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "@/lib/axios";
@@ -151,9 +151,9 @@ export default function ChatInterface() {
 
   const filteredChats = searchQuery
     ? chats?.filter((chat: Chat) =>
-        chat.users
-          .map((user) => user.name.toLowerCase())
-          .includes(searchQuery.toLowerCase())
+        chat.users.some((user) =>
+          user.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
       )
     : chats;
 
@@ -242,6 +242,8 @@ export default function ChatInterface() {
   }, [chatMessages]);
 
   const otherUser = selectedChat?.users.find((u) => u.id !== user?.id);
+  const formatChatTimestamp = (date: Date) =>
+    isToday(date) ? format(date, "p") : format(date, "PPP");
 
   return (
     <div className='flex h-[calc(100dvh-95.5px)] overflow-hidden md:h-[calc(100dvh-106.5px)] border border-border mt-4 bg-background'>
@@ -334,10 +336,7 @@ export default function ChatInterface() {
                             }
                           />
                           <Avatar className='h-8 w-8'>
-                            <AvatarImage
-                              src={user.avatarUrl || "/placeholder.svg"}
-                              alt={user.name}
-                            />
+                            <AvatarImage src={user.avatarUrl} alt={user.name} />
                             <AvatarFallback className='bg-accent text-xs border border-border'>
                               {user.name
                                 .split(" ")
@@ -428,7 +427,7 @@ export default function ChatInterface() {
                 <div className='flex items-center space-x-3'>
                   <Avatar className='h-10 w-10 md:h-12 md:w-12'>
                     <AvatarImage
-                      src={otherUser?.avatarUrl || "/placeholder.svg"}
+                      src={otherUser?.avatarUrl}
                       alt={otherUser?.name}
                     />
                     <AvatarFallback className='bg-accent text-xs border border-border'>
@@ -551,8 +550,10 @@ export default function ChatInterface() {
                   )}
                 >
                   <p className='text-sm'>{message.content}</p>
-                  <p className={`text-xs mt-1`}>
-                    {format(message.createdAt, "PPP")}
+                  <p
+                    className={`text-[11px] text-right mt-1 text-foreground/75`}
+                  >
+                    {formatChatTimestamp(new Date(message.createdAt))}
                   </p>
                 </div>
               </div>
