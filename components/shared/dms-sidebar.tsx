@@ -100,20 +100,20 @@ export default function DMSSidebar() {
                         href={item.url}
                         className={cn(
                           active.includes(item.url)
-                            ? "bg-muted-foreground/10 text-[#32BA55]"
+                            ? "bg-muted-foreground/10 text-success"
                             : "",
                           "mx-0 w-full py-5 px-3"
                         )}
                       >
                         <item.icon
                           className={cn(
-                            pathname.includes(item.url) && "text-[#32BA55]"
+                            pathname.includes(item.url) && "text-success"
                           )}
                         />
                         <span
                           className={cn(
                             "font-medium pl-1",
-                            pathname.includes(item.url) && "text-[#32BA55]"
+                            pathname.includes(item.url) && "text-success"
                           )}
                         >
                           {item.title}
@@ -146,10 +146,10 @@ export default function DMSSidebar() {
                                 </AccordionTrigger>
                                 <AccordionContent className='flex flex-col gap-1.5'>
                                   <Link
-                                    href={`/space/${space.id}`}
+                                    href={`/workspace/space/${space.id}`}
                                     className={cn(
                                       pathname.endsWith(`/${space.id}`) &&
-                                        "text-[#32BA55]",
+                                        "text-success",
                                       "font-medium"
                                     )}
                                   >
@@ -157,20 +157,21 @@ export default function DMSSidebar() {
                                   </Link>
                                   <Link
                                     href={`/workspace/space/${space.id}/view/list`}
+                                    prefetch={false}
                                     className={cn(
                                       pathname.includes(
                                         `/${space.id}/view/list`
-                                      ) && "text-[#32BA55]",
+                                      ) && "text-success",
                                       "font-medium"
                                     )}
                                   >
                                     Tasks
                                   </Link>
                                   <Link
-                                    href={`/space/${space.id}/chat`}
+                                    href={`/workspace/space/${space.id}/chat`}
                                     className={cn(
                                       pathname.includes(`/${space.id}/chat`) &&
-                                        "text-[#32BA55]",
+                                        "text-success",
                                       "font-medium"
                                     )}
                                   >
@@ -253,7 +254,7 @@ const SidebarHeaderPart = () => {
         <SidebarMenuItem className='px-3'>
           <div className='flex items-center gap-2 py-[5px]'>
             <div className='mt-0.5 self-start rounded-sm bg-[#F23553] px-1.5 py-1 text-[8px] font-bold text-white'>
-              PATRON
+              DMS
             </div>
           </div>
         </SidebarMenuItem>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,23 +37,28 @@ type FormValues = z.infer<typeof formSchema>;
 export function AddSpaceDialog() {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
-  const { data: userData } = useGetProfile();
+  const { data: userData, isFetching } = useGetProfile();
+
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
 
   const projectOptions = userData?.Project?.map((project: Project) => ({
     label: project.name,
     value: project.id,
   }));
+  const { projectId } = useParams();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      project: projectOptions && projectOptions[0]?.value,
+      project: projectId
+        ? projectId
+        : projectOptions && projectOptions[0]?.value,
     },
   });
 
   const { mutate: createSpace, isPending } = useCreateSpace();
-  const { projectId } = useParams();
 
   // console.log(userData);
 
@@ -63,12 +68,17 @@ export function AddSpaceDialog() {
         name: values.name,
         projectId: projectId ? (projectId as string) : values.project,
       };
+
+      console.log("Space Data:", data);
+
       createSpace(data, {
         onSuccess: () => {
           toast.success("Space created successfully");
-          queryClient.invalidateQueries({ queryKey: ["spaces"] });
-          queryClient.invalidateQueries({ queryKey: ["profile"] });
-          form.reset();
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ["spaces"] });
+            queryClient.invalidateQueries({ queryKey: ["profile"] });
+          }, 100);
+          // form.reset();
           setOpen(false);
         },
         onError: () => {
@@ -79,6 +89,8 @@ export function AddSpaceDialog() {
       console.error("Failed to create space:", error);
     }
   }
+
+  if (isFetching || !isMounted) return <div>Loading...</div>;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

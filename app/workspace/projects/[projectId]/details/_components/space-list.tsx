@@ -14,10 +14,14 @@ import { useParams, useRouter } from "next/navigation";
 import { useGetSpacesByProjectId } from "@/api/space.query";
 import { AddSpaceMemberDialog } from "./add-space-member-dialog";
 import { useDelayedSpinner } from "@/hooks/use-delayed-spinner";
+import React, { startTransition, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function SpacesList() {
   const { projectId } = useParams();
   const { data, isLoading } = useGetSpacesByProjectId(projectId as string);
+
+  const [activeSpaceId, setActiveSpaceId] = useState<string | null>(null);
 
   const showSpinner = useDelayedSpinner(isLoading, !!data);
 
@@ -33,18 +37,39 @@ export default function SpacesList() {
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4'>
       {data?.map((space: Space) => (
-        <SpaceCard key={space.id} {...{ space }} />
+        <SpaceCard
+          key={space.id}
+          {...{ space }}
+          setActiveSpaceId={setActiveSpaceId}
+        />
       ))}
+      {activeSpaceId && (
+        <AddSpaceMemberDialog
+          spaceId={activeSpaceId}
+          projectId={projectId as string}
+          onClose={() => setActiveSpaceId(null)}
+        />
+      )}
     </div>
   );
 }
 
-function SpaceCard({ space }: { space: Space }) {
-  const { projectId } = useParams();
-  const { push } = useRouter();
+const SpaceCard = React.memo(function SpaceCard({
+  space,
+  setActiveSpaceId,
+}: {
+  space: Space;
+  setActiveSpaceId: (id: string) => void;
+}) {
+  const router = useRouter();
+
   return (
     <Card
-      onClick={() => push(`/workspace/space/${space.id}/view/list`)}
+      onClick={() =>
+        startTransition(() => {
+          router.push(`/workspace/space/${space.id}/view/list`);
+        })
+      }
       className='overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary'
     >
       <CardHeader className='pb-3 space-y-2'>
@@ -65,13 +90,16 @@ function SpaceCard({ space }: { space: Space }) {
         </div>
       </CardContent>
       <CardFooter className='justify-end'>
-        <div onClick={(e) => e.stopPropagation()}>
-          <AddSpaceMemberDialog
-            spaceId={space.id}
-            projectId={projectId as string}
-          />
-        </div>
+        <Button
+          size={"sm"}
+          onClick={(e) => {
+            e.stopPropagation();
+            setActiveSpaceId(space.id);
+          }}
+        >
+          Add Member
+        </Button>
       </CardFooter>
     </Card>
   );
-}
+});
