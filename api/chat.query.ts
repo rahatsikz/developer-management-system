@@ -34,3 +34,21 @@ export const useCreateChat = () => {
     },
   });
 };
+
+export const useSeenMessage = () => {
+  return useMutation({
+    mutationFn: async (payload: { chatId: string; messageIds: string[] }) => {
+      try {
+        const response = await axiosInstance.put(
+          `/chats/${payload.chatId}/messages/seen`,
+          {
+            messageIds: payload.messageIds,
+          }
+        );
+        return response.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+  });
+};

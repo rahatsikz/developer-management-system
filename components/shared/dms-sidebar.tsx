@@ -157,6 +157,7 @@ export default function DMSSidebar() {
                                   </Link>
                                   <Link
                                     href={`/workspace/space/${space.id}/view/list`}
+                                    prefetch={false}
                                     className={cn(
                                       pathname.includes(
                                         `/${space.id}/view/list`

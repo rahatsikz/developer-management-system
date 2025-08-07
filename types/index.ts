@@ -76,6 +76,7 @@ export type Message = {
   chatId: string;
   sender: User;
   senderId: string;
+  seenBy: User[];
 };
 
 export type Repository = {

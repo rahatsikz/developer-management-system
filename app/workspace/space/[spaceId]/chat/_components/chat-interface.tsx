@@ -12,6 +12,7 @@ import {
   Plus,
   Users,
   X,
+  CheckCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,13 +34,18 @@ import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { io } from "socket.io-client";
 import { useAuthStore } from "@/store/use-auth-store";
-import { useCreateChat, useRecentChatsBySpaceId } from "@/api/chat.query";
+import {
+  useCreateChat,
+  useRecentChatsBySpaceId,
+  useSeenMessage,
+} from "@/api/chat.query";
 import { useParams } from "next/navigation";
 import { Chat, Message, User } from "@/types";
 import { format, isToday } from "date-fns";
 import { useGetSpaceById } from "@/api/space.query";
 import { useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "@/lib/axios";
+import { useInView } from "react-intersection-observer";
 
 const socket = io("http://localhost:5000", {
   withCredentials: true,
@@ -73,6 +79,31 @@ export default function ChatInterface() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showChatList, setShowChatList] = useState(true);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
+  const { user } = useAuthStore((state) => state);
+
+  const { mutate: mutateSeenMessage } = useSeenMessage();
+
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    threshold: 1,
+  });
+
+  useEffect(() => {
+    if (inView && selectedChat && chatMessages.length > 0) {
+      const unseenMessages = chatMessages.filter(
+        (msg) =>
+          msg.senderId !== user?.id &&
+          !msg.seenBy?.some((seenUser) => seenUser.id === user?.id)
+      );
+
+      if (unseenMessages.length > 0) {
+        mutateSeenMessage({
+          chatId: selectedChat.id,
+          messageIds: unseenMessages.map((m) => m.id),
+        });
+      }
+    }
+  }, [inView, selectedChat, chatMessages, mutateSeenMessage, user?.id]);
 
   // New chat creation state
   const [isCreateChatOpen, setIsCreateChatOpen] = useState(false);
@@ -222,8 +253,6 @@ export default function ChatInterface() {
     }
   };
 
-  const { user } = useAuthStore((state) => state);
-
   const onSendMessage = (data: MessageFormValues) => {
     console.log("Sending message:", data.message);
     const payload = {
@@ -243,7 +272,7 @@ export default function ChatInterface() {
 
   const otherUser = selectedChat?.users.find((u) => u.id !== user?.id);
   const formatChatTimestamp = (date: Date) =>
-    isToday(date) ? format(date, "p") : format(date, "PPP");
+    isToday(date) ? format(date, "p") : format(date, "MMM d, p");
 
   return (
     <div className='flex h-[calc(100dvh-95.5px)] overflow-hidden md:h-[calc(100dvh-106.5px)] border border-border mt-4 bg-background'>
@@ -413,6 +442,11 @@ export default function ChatInterface() {
         <ScrollArea className='flex-1 h-[calc(100dvh-220px)] md:max-h-[calc(100dvh-238px)]'>
           {filteredChats?.map((chat) => {
             const otherUser = chat.users.find((u) => u.id !== user?.id);
+            const unseenCount = chat.Message.filter(
+              (m) =>
+                m.senderId !== user?.id &&
+                !m.seenBy.some((u) => u.id === user?.id)
+            ).length;
 
             return (
               <div
@@ -455,6 +489,11 @@ export default function ChatInterface() {
                         {chat.Message.length > 0 &&
                           chat.Message[chat.Message.length - 1].content}
                       </p>
+                      {unseenCount > 0 && (
+                        <div className='ml-2 min-w-[20px] h-5 rounded-full bg-green-500 text-white text-xs px-1 flex items-center justify-center font-medium'>
+                          {unseenCount}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -530,34 +569,46 @@ export default function ChatInterface() {
           className='flex-1 p-3 md:p-4 bg-background h-[calc(100dvh-220px)] md:max-h-[calc(100dvh-240px)]'
           ref={scrollRef}
         >
-          <div className='space-y-3 md:space-y-4'>
-            {chatMessages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex",
-                  message.senderId === user?.id
-                    ? "justify-start"
-                    : "justify-end"
-                )}
-              >
+          <div className='space-y-3 md:space-y-4' ref={ref}>
+            {chatMessages.map((message) => {
+              const isSentByMe = message.senderId === user?.id;
+              const isSeen = message.seenBy?.some(
+                (user) => user.id === otherUser?.id
+              );
+
+              return (
                 <div
+                  key={message.id}
                   className={cn(
-                    "max-w-[280px] sm:max-w-xs lg:max-w-md px-3 md:px-4 py-2 rounded-lg",
-                    message.senderId !== user?.id
-                      ? "bg-green-600/70 text-white"
-                      : "bg-accent text-foreground border border-border"
+                    "flex",
+                    isSentByMe ? "justify-start" : "justify-end"
                   )}
                 >
-                  <p className='text-sm'>{message.content}</p>
-                  <p
-                    className={`text-[11px] text-right mt-1 text-foreground/75`}
+                  <div
+                    className={cn(
+                      "max-w-[280px] sm:max-w-xs lg:max-w-md px-3 md:px-4 py-2 rounded-lg",
+                      isSentByMe
+                        ? "bg-accent text-foreground border border-border"
+                        : "bg-green-600/70 text-white"
+                    )}
                   >
-                    {formatChatTimestamp(new Date(message.createdAt))}
-                  </p>
+                    <p className='text-sm'>{message.content}</p>
+                    <div className='flex items-center justify-between mt-1'>
+                      <p className='text-[11px] text-foreground/75'>
+                        {formatChatTimestamp(new Date(message.createdAt))}
+                      </p>
+                      {isSentByMe && isSeen && (
+                        <CheckCheck
+                          size={12}
+                          strokeWidth={3}
+                          className={cn("ml-2 text-green-600/70")}
+                        />
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </ScrollArea>
 
@@ -566,7 +617,7 @@ export default function ChatInterface() {
           <Form {...messageForm}>
             <form
               onSubmit={messageForm.handleSubmit(onSendMessage)}
-              className='flex items-center space-x-2'
+              className='flex items-center space-x-3'
             >
               <Button
                 type='button'

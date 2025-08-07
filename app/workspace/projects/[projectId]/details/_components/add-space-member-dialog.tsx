@@ -11,7 +11,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
@@ -19,17 +18,17 @@ import { useGetProject } from "@/api/project.query";
 import { MultiSelect, OptionProps } from "@/components/ui/MultiSelect";
 import { User } from "@/types";
 import { useParams } from "next/navigation";
-import { Plus } from "lucide-react";
 import { useGetSpaceById, useUpdateSpace } from "@/api/space.query";
 
 export function AddSpaceMemberDialog({
   projectId,
   spaceId,
+  onClose,
 }: {
   projectId: string;
   spaceId: string;
+  onClose: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [isMultiSelectOpen, setIsMultiSelectOpen] = useState(false);
 
   const queryClient = useQueryClient();
@@ -71,7 +70,7 @@ export function AddSpaceMemberDialog({
               queryClient.invalidateQueries({ queryKey: ["profile"] });
             }
           }, 800);
-          setOpen(false);
+          onClose();
           form.reset();
         },
         onError: () => {
@@ -94,7 +93,7 @@ export function AddSpaceMemberDialog({
 
   return (
     <Dialog
-      open={open}
+      open
       onOpenChange={(newOpenState) => {
         if (!newOpenState) {
           // Dialog is trying to close
@@ -103,24 +102,14 @@ export function AddSpaceMemberDialog({
             setIsMultiSelectOpen(false);
           } else {
             // If MultiSelect is not open, allow dialog to close
-            setOpen(false);
+            onClose();
           }
         } else {
           // Dialog is trying to open, allow it
-          setOpen(true);
+          onClose();
         }
       }}
     >
-      <DialogTrigger asChild>
-        {!projectIdParam ? (
-          <Button>
-            <Plus className='mr-1 size-4' />
-            Add Member
-          </Button>
-        ) : (
-          <Button size={"sm"}>Add Member</Button>
-        )}
-      </DialogTrigger>
       <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>
           <DialogTitle>Add new members</DialogTitle>
@@ -129,14 +118,7 @@ export function AddSpaceMemberDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              form.handleSubmit(onSubmit)(e);
-            }}
-            className='space-y-4'
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
             <MultiSelect
               formControl={form.control}
               className='w-full border-2 border-input pl-2 py-5 data-[state=open]:bg-background focus-visible:ring-1 focus-visible:ring-ring'
