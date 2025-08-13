@@ -48,7 +48,7 @@ import axiosInstance from "@/lib/axios";
 import { useInView } from "react-intersection-observer";
 import { getUserAcronym } from "@/lib/acronym";
 
-const socket = io("http://localhost:5000", {
+const socket = io(process.env.NEXT_PUBLIC_API_URL_SOCKET, {
   withCredentials: true,
 });
 
@@ -114,6 +114,12 @@ export default function ChatInterface() {
             },
           }
         );
+
+        socket.emit("messageSeen", {
+          chatId: selectedChat.id,
+          messageIds: unseenMessages.map((m) => m.id),
+          userId: user?.id,
+        });
       }
     }
   }, [
@@ -174,25 +180,46 @@ export default function ChatInterface() {
     };
   }, [selectedChat?.id]);
 
-  const [focusCount, setFocusCount] = useState(0);
-
   useEffect(() => {
-    const handleActivity = () => {
-      if (document.visibilityState === "visible") {
-        setFocusCount((prev) => prev + 1);
+    if (!selectedChat?.id) return;
+
+    // Join chat room
+    socket.emit("joinChat", selectedChat.id);
+
+    // Message seen listener
+    const handleMessageSeen = (payload: {
+      chatId: string;
+      messages: Message[];
+    }) => {
+      if (payload.chatId === selectedChat.id) {
+        setChatMessages((prev) =>
+          prev.map((msg) => {
+            const seenMsg = payload.messages.find((m) => m.id === msg.id);
+            return seenMsg ? { ...msg, seenBy: seenMsg.seenBy } : msg;
+          })
+        );
       }
     };
 
-    window.addEventListener("focus", handleActivity);
-    document.addEventListener("visibilitychange", handleActivity);
-    window.addEventListener("pointerover", handleActivity);
-
-    return () => {
-      window.removeEventListener("focus", handleActivity);
-      document.removeEventListener("visibilitychange", handleActivity);
-      window.removeEventListener("pointerover", handleActivity);
+    // Global message listener
+    const handleNewMessageGlobal = () => {
+      queryClient.invalidateQueries({
+        queryKey: ["chats"],
+        refetchType: "active",
+      });
     };
-  }, []);
+
+    // Register socket events
+    socket.on("messageSeen", handleMessageSeen);
+    socket.on("newMessageGlobal", handleNewMessageGlobal);
+
+    // Cleanup on unmount or chat change
+    return () => {
+      socket.emit("leaveChat", selectedChat.id);
+      socket.off("messageSeen", handleMessageSeen);
+      socket.off("newMessageGlobal", handleNewMessageGlobal);
+    };
+  }, [selectedChat?.id, queryClient]);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -201,7 +228,6 @@ export default function ChatInterface() {
           `/chats/${selectedChat?.id}/messages`
         );
         setChatMessages(res.data?.data);
-        setFocusCount(0);
       } catch (err) {
         console.error("Failed to load messages", err);
       }
@@ -212,7 +238,7 @@ export default function ChatInterface() {
     }
 
     fetchMessages();
-  }, [selectedChat, focusCount]);
+  }, [selectedChat]);
 
   // Search form
   const searchForm = useForm<SearchFormValues>({
