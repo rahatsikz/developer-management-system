@@ -46,8 +46,9 @@ import { useGetSpaceById } from "@/api/space.query";
 import { useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "@/lib/axios";
 import { useInView } from "react-intersection-observer";
+import { getUserAcronym } from "@/lib/acronym";
 
-const socket = io("http://localhost:5000", {
+const socket = io(process.env.NEXT_PUBLIC_API_URL_SOCKET, {
   withCredentials: true,
 });
 
@@ -88,6 +89,8 @@ export default function ChatInterface() {
     threshold: 1,
   });
 
+  const otherUser = selectedChat?.users.find((u) => u.id !== user?.id);
+
   useEffect(() => {
     if (inView && selectedChat && chatMessages.length > 0) {
       const unseenMessages = chatMessages.filter(
@@ -97,13 +100,37 @@ export default function ChatInterface() {
       );
 
       if (unseenMessages.length > 0) {
-        mutateSeenMessage({
+        mutateSeenMessage(
+          {
+            chatId: selectedChat.id,
+            messageIds: unseenMessages.map((m) => m.id),
+          },
+          {
+            onSuccess: () => {
+              queryClient.invalidateQueries({
+                queryKey: ["chats", spaceId],
+                refetchType: "active",
+              });
+            },
+          }
+        );
+
+        socket.emit("messageSeen", {
           chatId: selectedChat.id,
           messageIds: unseenMessages.map((m) => m.id),
+          userId: user?.id,
         });
       }
     }
-  }, [inView, selectedChat, chatMessages, mutateSeenMessage, user?.id]);
+  }, [
+    inView,
+    selectedChat,
+    chatMessages,
+    mutateSeenMessage,
+    user,
+    queryClient,
+    spaceId,
+  ]);
 
   // New chat creation state
   const [isCreateChatOpen, setIsCreateChatOpen] = useState(false);
@@ -127,6 +154,20 @@ export default function ChatInterface() {
   }, [selectedChat?.id]);
 
   useEffect(() => {
+    const handleNewMessageGlobal = () => {
+      queryClient.invalidateQueries({
+        queryKey: ["chats"],
+        refetchType: "active",
+      });
+    };
+
+    socket.on("newMessageGlobal", handleNewMessageGlobal);
+    return () => {
+      socket.off("newMessageGlobal", handleNewMessageGlobal);
+    };
+  }, [queryClient]);
+
+  useEffect(() => {
     const handleNewMessage = (message: Message) => {
       if (message.chatId === selectedChat?.id) {
         setChatMessages((prev) => [...prev, message]);
@@ -138,6 +179,47 @@ export default function ChatInterface() {
       socket.off("newMessage", handleNewMessage);
     };
   }, [selectedChat?.id]);
+
+  useEffect(() => {
+    if (!selectedChat?.id) return;
+
+    // Join chat room
+    socket.emit("joinChat", selectedChat.id);
+
+    // Message seen listener
+    const handleMessageSeen = (payload: {
+      chatId: string;
+      messages: Message[];
+    }) => {
+      if (payload.chatId === selectedChat.id) {
+        setChatMessages((prev) =>
+          prev.map((msg) => {
+            const seenMsg = payload.messages.find((m) => m.id === msg.id);
+            return seenMsg ? { ...msg, seenBy: seenMsg.seenBy } : msg;
+          })
+        );
+      }
+    };
+
+    // Global message listener
+    const handleNewMessageGlobal = () => {
+      queryClient.invalidateQueries({
+        queryKey: ["chats"],
+        refetchType: "active",
+      });
+    };
+
+    // Register socket events
+    socket.on("messageSeen", handleMessageSeen);
+    socket.on("newMessageGlobal", handleNewMessageGlobal);
+
+    // Cleanup on unmount or chat change
+    return () => {
+      socket.emit("leaveChat", selectedChat.id);
+      socket.off("messageSeen", handleMessageSeen);
+      socket.off("newMessageGlobal", handleNewMessageGlobal);
+    };
+  }, [selectedChat?.id, queryClient]);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -154,6 +236,8 @@ export default function ChatInterface() {
     if (selectedChat?.id) {
       fetchMessages();
     }
+
+    fetchMessages();
   }, [selectedChat]);
 
   // Search form
@@ -270,7 +354,6 @@ export default function ChatInterface() {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
-  const otherUser = selectedChat?.users.find((u) => u.id !== user?.id);
   const formatChatTimestamp = (date: Date) =>
     isToday(date) ? format(date, "p") : format(date, "MMM d, p");
 
@@ -366,11 +449,8 @@ export default function ChatInterface() {
                           />
                           <Avatar className='h-8 w-8'>
                             <AvatarImage src={user.avatarUrl} alt={user.name} />
-                            <AvatarFallback className='bg-accent text-xs border border-border'>
-                              {user.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
+                            <AvatarFallback className='bg-accent text-[10px] leading-0 border border-border'>
+                              {getUserAcronym(user)}
                             </AvatarFallback>
                           </Avatar>
                           <div className='flex-1 min-w-0'>
@@ -464,11 +544,8 @@ export default function ChatInterface() {
                       src={otherUser?.avatarUrl}
                       alt={otherUser?.name}
                     />
-                    <AvatarFallback className='bg-accent text-xs border border-border'>
-                      {otherUser?.name
-                        ?.split(" ")
-                        .map((n) => n[0])
-                        .join("")}
+                    <AvatarFallback className='bg-accent text-[10px] tracking-wider font-medium border border-border'>
+                      {getUserAcronym(otherUser as User)}
                     </AvatarFallback>
                   </Avatar>
                   <div className='flex-1 min-w-0'>
@@ -526,11 +603,8 @@ export default function ChatInterface() {
                 src={otherUser?.avatarUrl || "/placeholder.svg"}
                 alt={otherUser?.name}
               />
-              <AvatarFallback className='bg-accent text-xs border border-border'>
-                {otherUser?.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
+              <AvatarFallback className='bg-accent text-[11px] font-medium leading-0 border border-border'>
+                {getUserAcronym(otherUser as User)}
               </AvatarFallback>
             </Avatar>
             <div>
@@ -565,13 +639,13 @@ export default function ChatInterface() {
         </div>
 
         {/* Messages Area */}
-        <ScrollArea
-          className='flex-1 p-3 md:p-4 bg-background h-[calc(100dvh-220px)] md:max-h-[calc(100dvh-240px)]'
-          ref={scrollRef}
-        >
+        <ScrollArea className='flex-1 p-3 md:p-4 bg-background h-[calc(100dvh-220px)] md:max-h-[calc(100dvh-240px)]'>
           <div className='space-y-3 md:space-y-4' ref={ref}>
             {chatMessages.map((message) => {
               const isSentByMe = message.senderId === user?.id;
+              const otherUser = selectedChat?.users.find(
+                (u) => u.id !== user?.id
+              );
               const isSeen = message.seenBy?.some(
                 (user) => user.id === otherUser?.id
               );
@@ -610,6 +684,7 @@ export default function ChatInterface() {
               );
             })}
           </div>
+          <div ref={scrollRef} />
         </ScrollArea>
 
         {/* Chat Input */}

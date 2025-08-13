@@ -1,5 +1,5 @@
 import axiosInstance from "@/lib/axios";
-import { Chat } from "@/types";
+import { Chat, Message } from "@/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const useRecentChatsBySpaceId = (spaceId: string) => {
@@ -14,6 +14,44 @@ export const useRecentChatsBySpaceId = (spaceId: string) => {
       }
     },
     enabled: !!spaceId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+};
+
+export const useGetMessagesById = (id: string) => {
+  return useQuery({
+    queryKey: ["messages", id],
+    queryFn: async () => {
+      try {
+        const response = await axiosInstance.get(`/messages/${id}`);
+
+        return response.data.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+    enabled: !!id,
+    staleTime: 0,
+  });
+};
+
+export const useGetMessagesByIds = (ids: string[]) => {
+  return useQuery({
+    queryKey: ["messages", ...ids],
+    queryFn: async (): Promise<Message[]> => {
+      if (ids.length === 0) return [];
+      try {
+        const response = await axiosInstance.get(`/messages`, {
+          params: { ids: ids.join(",") },
+        });
+        return response.data.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+    enabled: ids.length > 0,
+    staleTime: 0,
   });
 };
 

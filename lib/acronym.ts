@@ -14,7 +14,7 @@ export function getUserAcronym(user: User) {
   };
 
   // Preferred source for acronym: name if available, else email
-  const source = user.name?.trim() || user.email;
+  const source = user?.name?.trim() || user?.email;
   // Take first 2 letters (uppercased)
   const raw = source?.replace(/\s+/g, "").slice(0, 2).toUpperCase();
   const acronym = makeUnique(raw);
