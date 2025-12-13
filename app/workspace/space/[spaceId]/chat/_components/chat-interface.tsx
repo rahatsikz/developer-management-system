@@ -599,10 +599,7 @@ export default function ChatInterface() {
               <ArrowLeft className='h-5 w-5' />
             </Button>
             <Avatar className='h-8 w-8 md:h-10 md:w-10'>
-              <AvatarImage
-                src={otherUser?.avatarUrl || "/placeholder.svg"}
-                alt={otherUser?.name}
-              />
+              <AvatarImage src={otherUser?.avatarUrl} alt={otherUser?.name} />
               <AvatarFallback className='bg-accent text-[11px] font-medium leading-0 border border-border'>
                 {getUserAcronym(otherUser as User)}
               </AvatarFallback>
