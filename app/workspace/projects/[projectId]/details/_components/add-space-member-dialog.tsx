@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -11,14 +11,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
-import { toast } from "sonner";
-import { useGetProject } from "@/api/project.query";
-import { MultiSelect, OptionProps } from "@/components/ui/MultiSelect";
-import { User } from "@/types";
-import { useParams } from "next/navigation";
-import { useGetSpaceById, useUpdateSpace } from "@/api/space.query";
+} from '@/components/ui/dialog';
+import { Form } from '@/components/ui/form';
+import { toast } from 'sonner';
+import { useGetProject } from '@/api/project.query';
+import { MultiSelect, OptionProps } from '@/components/ui/MultiSelect';
+import { User } from '@/types';
+import { useParams } from 'next/navigation';
+import { useGetSpaceById, useUpdateSpace } from '@/api/space.query';
 
 export function AddSpaceMemberDialog({
   projectId,
@@ -42,11 +42,8 @@ export function AddSpaceMemberDialog({
 
   const { mutate: updateSpace, isPending } = useUpdateSpace(spaceId);
 
-  const { data: projectData, isFetching: companyIsFetching } = useGetProject(
-    projectId as string
-  );
-  const { data: spaceData, isFetching: projectIsFetching } =
-    useGetSpaceById(spaceId);
+  const { data: projectData, isFetching: companyIsFetching } = useGetProject(projectId as string);
+  const { data: spaceData, isFetching: projectIsFetching } = useGetSpaceById(spaceId);
 
   //   console.log({ projectData, projectData });
 
@@ -60,25 +57,25 @@ export function AddSpaceMemberDialog({
 
       updateSpace(data, {
         onSuccess: () => {
-          toast.success("Team members added to space");
+          toast.success('Team members added to space');
           setTimeout(() => {
             if (!projectIdParam) {
-              queryClient.invalidateQueries({ queryKey: ["space"] });
+              queryClient.invalidateQueries({ queryKey: ['space'] });
             } else {
-              queryClient.invalidateQueries({ queryKey: ["spaces"] });
-              queryClient.invalidateQueries({ queryKey: ["space"] });
-              queryClient.invalidateQueries({ queryKey: ["profile"] });
+              queryClient.invalidateQueries({ queryKey: ['spaces'] });
+              queryClient.invalidateQueries({ queryKey: ['space'] });
+              queryClient.invalidateQueries({ queryKey: ['profile'] });
             }
           }, 800);
           onClose();
           form.reset();
         },
         onError: () => {
-          toast.error("Failed to add members to space");
+          toast.error('Failed to add members to space');
         },
       });
     } catch (error) {
-      console.error("Failed to add members to space", error);
+      console.error('Failed to add members to space', error);
     }
   }
 
@@ -88,7 +85,7 @@ export function AddSpaceMemberDialog({
 
   const availableMembers = getAvailableUserOptions(
     projectData?.users ?? [],
-    spaceData?.members ?? []
+    spaceData?.members ?? [],
   );
 
   return (
@@ -110,27 +107,25 @@ export function AddSpaceMemberDialog({
         }
       }}
     >
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add new members</DialogTitle>
-          <DialogDescription>
-            Add new members to your project.
-          </DialogDescription>
+          <DialogDescription>Add new members to your project.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <MultiSelect
               formControl={form.control}
-              className='w-full border-2 border-input pl-2 py-5 data-[state=open]:bg-background focus-visible:ring-1 focus-visible:ring-ring'
-              name='members'
+              className="w-full border-2 border-input pl-2 py-5 data-[state=open]:bg-background focus-visible:ring-1 focus-visible:ring-ring"
+              name="members"
               options={availableMembers ?? []}
-              placeholder='Select members'
+              placeholder="Select members"
               open={isMultiSelectOpen} // Pass controlled open state
               onOpenChange={setIsMultiSelectOpen} // Pass handler to update state
             />
             <DialogFooter>
-              <Button type='submit' disabled={isPending}>
-                {isPending ? "Adding..." : "Add to Space"}
+              <Button type="submit" disabled={isPending}>
+                {isPending ? 'Adding...' : 'Add to Space'}
               </Button>
             </DialogFooter>
           </form>
@@ -140,10 +135,7 @@ export function AddSpaceMemberDialog({
   );
 }
 
-function getAvailableUserOptions(
-  projectUsers: User[],
-  spaceUsers: User[]
-): OptionProps[] {
+function getAvailableUserOptions(projectUsers: User[], spaceUsers: User[]): OptionProps[] {
   // Step 1: Build a Set of project user IDs for fast lookup
   const spaceUserIds = new Set(spaceUsers.map((u) => u.id));
 
@@ -152,23 +144,25 @@ function getAvailableUserOptions(
 
   // Step 3: Generate unique acronyms
   const usedAcronyms = new Set<string>();
-  const makeUnique = (base: string) => {
-    let acronym = base;
-    let i = 2;
-    // If there's a clash, extend by one more character:
-    while (usedAcronyms.has(acronym)) {
-      acronym = base.slice(0, ++i).toUpperCase();
-    }
-    usedAcronyms.add(acronym);
-    return acronym;
-  };
 
   return candidates.map((user) => {
-    // Preferred source for acronym: name if available, else email
     const source = user.name?.trim() || user.email;
-    // Take first 2 letters (uppercased)
-    const raw = source.replace(/\s+/g, "").slice(0, 2).toUpperCase();
-    const acronym = makeUnique(raw);
+    const cleanSource = source.replace(/\s+/g, '').toUpperCase();
+
+    let acronym = cleanSource.slice(0, 2);
+    let i = 2;
+
+    while (usedAcronyms.has(acronym)) {
+      if (i < cleanSource.length) {
+        acronym = cleanSource.slice(0, ++i);
+      } else {
+        // If we run out of letters, append a number
+        acronym = `${cleanSource}${i - cleanSource.length + 1}`;
+        i++;
+      }
+    }
+
+    usedAcronyms.add(acronym);
 
     return {
       value: user.id,
